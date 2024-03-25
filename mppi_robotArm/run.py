@@ -4,6 +4,9 @@ import matplotlib.animation as animation
 from utils import *
 from sys_params import SYS_PARAMS
 
+#to save numpy arry to csv
+import pandas as pd
+
 #load params
 params = SYS_PARAMS()
 
@@ -62,6 +65,9 @@ for k in range(1, int(iter) + 1):
     t_rec[k] = t
 
 
+
+
+
 ############################
 Joint_1 = [0, 0]
 Joint_2 = [1, 0]
@@ -75,6 +81,8 @@ ax.set_xlabel('X (m)')
 ax.set_ylabel('Y (m)')
 ax.set_title('Robot Movement')
 
+
+
 Robot_arm_1, = ax.plot([Joint_1[0], Joint_2[0]], [
                        Joint_1[1], Joint_2[1]], 'k', linewidth=4)
 Robot_arm_2, = ax.plot([Joint_2[0], Joint_3[0]], [
@@ -85,7 +93,12 @@ Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
 
 path_x, path_y = [], []
 
+a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
+a2 = np.transpose(np.array(ry_rec[3:, 0])).reshape(-1, 1)
+a3 = np.concatenate((a1, a2), axis = 1)
+df = pd.DataFrame(a3)
 
+df.to_csv('reference.csv')
 def update(frame):
     Robot_X1 = x_rec[frame, 0]
     Robot_Y1 = y_rec[frame, 0]
@@ -108,57 +121,57 @@ ani = animation.FuncAnimation(fig, update, frames=range(
 plt.show()
 
 ############################
-plt.figure(1)
+# plt.figure(1)
 
-plt.subplot(2, 2, 1)
-plt.plot(t_rec, 180/np.pi*q_rec[:, 0], 'k', t_rec,
-         180/np.pi*rq_rec[:, 0], '--b', linewidth=1.2)
-plt.title('Theta 1 Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('Theta (Deg)')
-plt.axis([0, 10, -10, 160])
-plt.legend(['Theta 1 Output', 'Theta 1 Input'])
-plt.grid(True)
+# plt.subplot(2, 2, 1)
+# plt.plot(t_rec, 180/np.pi*q_rec[:, 0], 'k', t_rec,
+#          180/np.pi*rq_rec[:, 0], '--b', linewidth=1.2)
+# plt.title('Theta 1 Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('Theta (Deg)')
+# plt.axis([0, 10, -10, 160])
+# plt.legend(['Theta 1 Output', 'Theta 1 Input'])
+# plt.grid(True)
 
-plt.subplot(2, 2, 2)
-plt.plot(t_rec, 180/np.pi*q_rec[:, 1], 'k', t_rec,
-         180/np.pi*rq_rec[:, 1], '--b', linewidth=1.2)
-plt.title('Theta 2 Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('Theta (Deg)')
-plt.axis([0, 10, -160, 10])
-plt.legend(['Theta 2 Output', 'Theta 2 Input'])
-plt.grid(True)
+# plt.subplot(2, 2, 2)
+# plt.plot(t_rec, 180/np.pi*q_rec[:, 1], 'k', t_rec,
+#          180/np.pi*rq_rec[:, 1], '--b', linewidth=1.2)
+# plt.title('Theta 2 Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('Theta (Deg)')
+# plt.axis([0, 10, -160, 10])
+# plt.legend(['Theta 2 Output', 'Theta 2 Input'])
+# plt.grid(True)
 
-plt.subplot(2, 2, 3)
-plt.plot(t_rec, x_rec[:, 1], 'k', t_rec, rx_rec[:, 0], '--b', linewidth=1.2)
-plt.title('X(end point) Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('X (m)')
-plt.axis([0, 10, -1, 4])
-plt.legend(['X output', 'X input'])
-plt.grid(True)
+# plt.subplot(2, 2, 3)
+# plt.plot(t_rec, x_rec[:, 1], 'k', t_rec, rx_rec[:, 0], '--b', linewidth=1.2)
+# plt.title('X(end point) Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('X (m)')
+# plt.axis([0, 10, -1, 4])
+# plt.legend(['X output', 'X input'])
+# plt.grid(True)
 
-plt.subplot(2, 2, 4)
-plt.plot(t_rec, y_rec[:, 1], 'k', t_rec, ry_rec[:, 0], '--b', linewidth=1.2)
-plt.title('Y(end point) Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('Y (m)')
-plt.axis([0, 10, -2, 4])
-plt.legend(['Y output', 'Y input'])
-plt.grid(True)
+# plt.subplot(2, 2, 4)
+# plt.plot(t_rec, y_rec[:, 1], 'k', t_rec, ry_rec[:, 0], '--b', linewidth=1.2)
+# plt.title('Y(end point) Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('Y (m)')
+# plt.axis([0, 10, -2, 4])
+# plt.legend(['Y output', 'Y input'])
+# plt.grid(True)
 
-############################
-plt.figure(2)
+# ############################
+# plt.figure(2)
 
-plt.subplot(2, 1, 1)
-plt.plot(t_rec, u_rec[:, 0], 'k', linewidth=1.2)
-plt.title('u(1)')
-plt.grid(True)
+# plt.subplot(2, 1, 1)
+# plt.plot(t_rec, u_rec[:, 0], 'k', linewidth=1.2)
+# plt.title('u(1)')
+# plt.grid(True)
 
-plt.subplot(2, 1, 2)
-plt.plot(t_rec, u_rec[:, 1], 'k', linewidth=1.2)
-plt.title('u(2)')
-plt.grid(True)
+# plt.subplot(2, 1, 2)
+# plt.plot(t_rec, u_rec[:, 1], 'k', linewidth=1.2)
+# plt.title('u(2)')
+# plt.grid(True)
 
-plt.show()
+# plt.show()
