@@ -3,6 +3,8 @@ import numpy as np
 from typing import Tuple
 from pathtracking_kbm import Vehicle
 
+vList = []
+i = 0
 class MPPIControllerForPathTracking():
     def __init__(
             self,
@@ -155,6 +157,7 @@ class MPPIControllerForPathTracking():
         # limit control inputs
         v[0] = np.clip(v[0], -self.max_steer_abs, self.max_steer_abs) # limit steering input
         v[1] = np.clip(v[1], -self.max_accel_abs, self.max_accel_abs) # limit acceleraiton input
+        
         return v
 
     def _c(self, x_t: np.ndarray) -> float:
@@ -266,11 +269,11 @@ def run_simulation_mppi_pathtracking() -> None:
 
     # simulation settings
     delta_t = 0.05 # [sec]
-    sim_steps = 1000 # [steps]
+    sim_steps = 100 # [steps]
     print(f"[INFO] delta_t : {delta_t:.2f}[s] , sim_steps : {sim_steps}[steps], total_sim_time : {delta_t*sim_steps:.2f}[s]")
 
     # load the reference path
-    ref_path = np.genfromtxt('./data/ovalpath.csv', delimiter=',', skip_header=1)
+    ref_path = np.genfromtxt('sample_mppiCode/python_simple_mppi/data/ovalpath.csv', delimiter=',', skip_header=1)
 
     # initialize a vehicle as a control target
     vehicle = Vehicle(
@@ -323,8 +326,11 @@ def run_simulation_mppi_pathtracking() -> None:
         # update states of vehicle
         vehicle.update(u=optimal_input, delta_t=delta_t, optimal_traj=optimal_traj[:, 0:2], sampled_traj_list=sampled_traj_list[:, :, 0:2])
 
+    vList = np.array(vList)
+    vList.max(axis=0)
     # save animation
-    vehicle.save_animation("mppi_pathtracking_demo.mp4", interval=int(delta_t * 1000), movie_writer="ffmpeg") # ffmpeg is required to write mp4 file
+    #vehicle.save_animation("mppi_pathtracking_demo.mp4", interval=int(delta_t * 1000), movie_writer="ffmpeg") # ffmpeg is required to write mp4 file
 
 if __name__ == "__main__":
     run_simulation_mppi_pathtracking()
+

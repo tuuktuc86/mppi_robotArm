@@ -16,13 +16,13 @@ dt = params['Ts']
 iter = sim_time/dt
 
 #state x = [q1, q2, dq1, dq2]
-x = np.array([0.0, 0.0, 0.0, 0.0])
+x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807]) # x, y, q1, q2
 
 trajName = 'circle'
 isDesturbance = 0
 
-# ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
-# print(ref_path.shape)
+ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
+#print(ref_path.shape) #1216, 4 [x, y, q1, q2]
 
 #record for animation
 rq_rec = np.zeros((int(iter)+1, 2))
@@ -34,23 +34,33 @@ q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
 
+dq = np.array([0.0, 0.0])
+# initialize a mppi controller for the vehicle
+mppi = MPPIControllerForRobotArm(
+    ref_path=ref_path,
+)
+
 
 for k in range(1, int(iter) + 1):
     t = k * dt
 
-    Theta = t
-    r, XE, YE = Inverse_Kinemetic(Theta)
+    #Theta = t
+    #r, XE, YE = Inverse_Kinemetic(Theta)
     #r은 q1, q2가 따라야 하는 것. XE는 X가 따라야 하는 것, YE는 Y가 따라야 하는 것
     # print(r, "||", XE, "||", YE)
-    if t > 1:
-        dr = np.array([0.01, 0.01])
-        ddr = np.array([0.001, 0.001])
-    else:
-        dr = np.array([0, 0])
-        ddr = np.array([0, 0])
+    # if t > 1:
+    #     dr = np.array([0.01, 0.01])
+    #     ddr = np.array([0.001, 0.001])
+    # else:
+    #     dr = np.array([0, 0])
+    #     ddr = np.array([0, 0])
     
-    v = Controller(x, r, dr, ddr)
-    u = Feedback_linearization(x, v)
+    optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list = mppi.calc_control_input(
+        observed_x = x, dq=dq
+    )
+
+    # v = Controller(x, r, dr, ddr)
+    # u = Feedback_linearization(x, v)
 
     x[2:4] += dt * Arm_Dynamic(x, u)
     x[0:2] += dt * x[2:4]
@@ -97,25 +107,32 @@ Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
 
 path_x, path_y = [], []
 
-# save reference trajectory
-a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
-a2 = np.array(ry_rec[3:, 0]).reshape(-1, 1)
-a3 = np.array(rq_rec[3:, 0]).reshape(-1, 1)
-a4 = np.array(rq_rec[3:, 1]).reshape(-1, 1)
-# print(a1.shape)
-# print(a2.shape)
-# print(a3.shape)
-# print(a4.shape)
-a5 = np.concatenate((a1, a2), axis = 1)
-a6 = np.concatenate((a5, a3), axis = 1)
-a7 = np.concatenate((a6, a4), axis = 1) #1998, 1 and x, y, q1, q2의 추종값
-#print(a7.shape)
-df = pd.DataFrame(a7)
+# # save reference trajectory
+# a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
+# a2 = np.array(ry_rec[3:, 0]).reshape(-1, 1)
+# a3 = np.array(rq_rec[3:, 0]).reshape(-1, 1)
+# a4 = np.array(rq_rec[3:, 1]).reshape(-1, 1)
+# # print(a1.shape)
+# # print(a2.shape)
+# # print(a3.shape)
+# # print(a4.shape)
+# a5 = np.concatenate((a1, a2), axis = 1)
+# a6 = np.concatenate((a5, a3), axis = 1)
+# a7 = np.concatenate((a6, a4), axis = 1) #1998, 1 and x, y, q1, q2의 추종값
+# #print(a7.shape)
+# df = pd.DataFrame(a7)
 
-df.to_csv('reference.csv')
-#중간에 1.4,0.8, 2.0.0 여러개 있어서 하나씩만 빼고 다 지움
+# df.to_csv('reference.csv')
+# #중간에 1.4,0.8, 2.0.0 여러개 있어서 하나씩만 빼고 다 지움
 # index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방. 그리고 columns 번호 삭제 해야됨
 # '''
+
+#save u_rec
+b1 = np.array(u_rec[4:,0]).reshape(-1, 1)
+b2 = np.array(u_rec[4:,1]).reshape(-1, 1)
+b3 = np.concatenate((b1, b2), axis = 1)
+df1 = pd.DataFrame(b3)
+df1.to_csv("u_ref")
 
 def update(frame):
     Robot_X1 = x_rec[frame, 0]

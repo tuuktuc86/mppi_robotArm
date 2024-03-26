@@ -44,7 +44,7 @@ for k in range(1, int(iter) + 1):
     q += dt * dq
 
     x1, y1, x2, y2 = Forward_Kinemetic(q)
-
+    
     if k == 1:
         continue
     rq_rec[k, :] = r
