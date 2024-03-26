@@ -37,7 +37,8 @@ for k in range(1, int(iter) + 1):
 
     Theta = t
     r, XE, YE = Inverse_Kinemetic(Theta)
-
+    #r은 q1, q2가 따라야 하는 것. XE는 X가 따라야 하는 것, YE는 Y가 따라야 하는 것
+    # print(r, "||", XE, "||", YE)
     if t > 1:
         dr = np.array([0.01, 0.01])
         ddr = np.array([0.001, 0.001])
@@ -93,12 +94,17 @@ Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
 
 path_x, path_y = [], []
 
+''' save reference trajectory
 a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
 a2 = np.transpose(np.array(ry_rec[3:, 0])).reshape(-1, 1)
 a3 = np.concatenate((a1, a2), axis = 1)
 df = pd.DataFrame(a3)
 
 df.to_csv('reference.csv')
+#중간에 1.4,0.8, 2.0.0 여러개 있어서 하나씩만 빼고 다 지움
+index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방
+'''
+
 def update(frame):
     Robot_X1 = x_rec[frame, 0]
     Robot_Y1 = y_rec[frame, 0]

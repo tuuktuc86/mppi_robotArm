@@ -246,7 +246,8 @@ def run_simulation_mppi_cartpole() -> None:
 
         # get current state of cartpole
         current_state = cartpole.get_state()
-
+        print(current_state)
+    
         # calculate input force with MPPI
         input_force, input_force_sequence = mppi.calc_control_input(
             observed_x = current_state
