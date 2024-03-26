@@ -21,6 +21,9 @@ x = np.array([0.0, 0.0, 0.0, 0.0])
 trajName = 'circle'
 isDesturbance = 0
 
+# ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
+# print(ref_path.shape)
+
 #record for animation
 rq_rec = np.zeros((int(iter)+1, 2))
 rx_rec = np.zeros((int(iter)+1, 2))
@@ -45,7 +48,7 @@ for k in range(1, int(iter) + 1):
     else:
         dr = np.array([0, 0])
         ddr = np.array([0, 0])
-
+    
     v = Controller(x, r, dr, ddr)
     u = Feedback_linearization(x, v)
 
@@ -94,16 +97,25 @@ Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
 
 path_x, path_y = [], []
 
-''' save reference trajectory
+# save reference trajectory
 a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
-a2 = np.transpose(np.array(ry_rec[3:, 0])).reshape(-1, 1)
-a3 = np.concatenate((a1, a2), axis = 1)
-df = pd.DataFrame(a3)
+a2 = np.array(ry_rec[3:, 0]).reshape(-1, 1)
+a3 = np.array(rq_rec[3:, 0]).reshape(-1, 1)
+a4 = np.array(rq_rec[3:, 1]).reshape(-1, 1)
+# print(a1.shape)
+# print(a2.shape)
+# print(a3.shape)
+# print(a4.shape)
+a5 = np.concatenate((a1, a2), axis = 1)
+a6 = np.concatenate((a5, a3), axis = 1)
+a7 = np.concatenate((a6, a4), axis = 1) #1998, 1 and x, y, q1, q2의 추종값
+#print(a7.shape)
+df = pd.DataFrame(a7)
 
 df.to_csv('reference.csv')
 #중간에 1.4,0.8, 2.0.0 여러개 있어서 하나씩만 빼고 다 지움
-index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방
-'''
+# index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방. 그리고 columns 번호 삭제 해야됨
+# '''
 
 def update(frame):
     Robot_X1 = x_rec[frame, 0]
