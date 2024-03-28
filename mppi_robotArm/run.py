@@ -11,11 +11,10 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 1
+sim_time = 3
 dt = params['Ts']
 iter = sim_time/dt
 
-#iter = 100
 
 x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,0, 0]) # x, y, q1, q2, dq1, dq2
 #x = np.array([1.39700249916682, 0.859900049988097, 1.35193891583351, -1.05368674959499,0, 0]) # x, y, q1, q2, dq1, dq2
@@ -24,7 +23,7 @@ trajName = 'circle'
 isDesturbance = 0
 ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
 #ref_path = np.genfromtxt('reference3_0.01.csv', delimiter=',', skip_header=1)
-#print(ref_path.shape) #1216, 4 [x, y, q1, q2]
+#print(ref_path.shape) #1214, 4 [x, y, q1, q2]
 
 #record for animation
 rq_rec = np.zeros((int(iter)+1, 2))
@@ -35,6 +34,9 @@ y_rec = np.zeros((int(iter)+1, 2))
 q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
+
+ref_rec = ref_path
+
 
 dq = np.array([0.0, 0.0])
 # initialize a mppi controller for the vehicle
@@ -100,8 +102,8 @@ Joint_2 = [1, 0]
 Joint_3 = [2, 0]
 fig, ax = plt.subplots()
 ax.axis('equal')
-ax.set_xlim(-1, 2.5)
-ax.set_ylim(-1, 2.5)
+ax.set_xlim(-3, 3)
+ax.set_ylim(-3, 3)
 ax.grid(True)
 ax.set_xlabel('X (m)')
 ax.set_ylabel('Y (m)')
@@ -115,7 +117,7 @@ Robot_arm_2, = ax.plot([Joint_2[0], Joint_3[0]], [
                        Joint_2[1], Joint_3[1]], 'k', linewidth=4)
 Robot_path, = ax.plot([Joint_3[0]-0.01, Joint_3[0]],
                       [Joint_3[1]-0.01, Joint_3[1]], 'r.', linewidth=0.5)
-Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
+Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b')
 
 path_x, path_y = [], []
 
@@ -164,7 +166,7 @@ def update(frame):
 
 
 ani = animation.FuncAnimation(fig, update, frames=range(
-    0, int(iter)+1, 10), blit=True, interval=5, repeat=False)
+    0, int(iter)+1, 10), blit=True, interval=3, repeat=True)
 plt.show()
 
 ###########################
