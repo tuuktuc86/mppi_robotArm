@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from sys_params import SYS_PARAMS
 from utils import *
+import pandas as pd
 
 params = SYS_PARAMS()
 sim_time = 10
 dt = params['Ts']
 iter = sim_time/dt
 
-q = np.array([0.0, 0.0])
+q = np.array([1.15330155205678, -1.25860399690807])
 dq = np.array([0.0, 0.0])
 
 trajName = 'circle'
@@ -39,12 +40,15 @@ for k in range(1, int(iter) + 1):
 
     v = Controller(q, dq, r, dr, ddr)
     u = Feedback_linearization(q, dq, v)
-
+    # print("****")
+    # print(q.shape) q, dqshape(2,)
+    # print(dq.shape)
+    print(f"k = {k}")
     dq += dt * Arm_Dynamic(q, dq, u)
     q += dt * dq
-
-    x1, y1, x2, y2 = Forward_Kinemetic(q)
     
+    x1, y1, x2, y2 = Forward_Kinemetic(q)
+
     if k == 1:
         continue
     rq_rec[k, :] = r
@@ -80,7 +84,24 @@ Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
 
 path_x, path_y = [], []
 
-
+# # save reference trajectory
+# a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
+# a2 = np.array(ry_rec[3:, 0]).reshape(-1, 1)
+# a3 = np.array(rq_rec[3:, 0]).reshape(-1, 1)
+# a4 = np.array(rq_rec[3:, 1]).reshape(-1, 1)
+# # print(a1.shape)
+# # print(a2.shape)
+# # print(a3.shape)
+# # print(a4.shape)
+# a5 = np.concatenate((a1, a2), axis = 1)
+# a6 = np.concatenate((a5, a3), axis = 1)
+# a7 = np.concatenate((a6, a4), axis = 1) #1998, 1 and x, y, q1, q2의 추종값
+# print(a7.shape)
+# df = pd.DataFrame(a7)
+# df.to_csv(f'reference{sim_time}_{dt}.csv')
+#중간에 1.4,0.8, 2.0.0 여러개 있어서 하나씩만 빼고 다 지움
+# index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방. 그리고 columns 번호 삭제 해야됨
+# '''
 def update(frame):
     Robot_X1 = x_rec[frame, 0]
     Robot_Y1 = y_rec[frame, 0]

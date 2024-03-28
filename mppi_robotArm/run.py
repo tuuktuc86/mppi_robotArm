@@ -11,17 +11,19 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 10
+sim_time = 1
 dt = params['Ts']
 iter = sim_time/dt
 
-#state x = [q1, q2, dq1, dq2]
-x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807]) # x, y, q1, q2
+#iter = 100
+
+x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,0, 0]) # x, y, q1, q2, dq1, dq2
+#x = np.array([1.39700249916682, 0.859900049988097, 1.35193891583351, -1.05368674959499,0, 0]) # x, y, q1, q2, dq1, dq2
 
 trajName = 'circle'
 isDesturbance = 0
-
 ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
+#ref_path = np.genfromtxt('reference3_0.01.csv', delimiter=',', skip_header=1)
 #print(ref_path.shape) #1216, 4 [x, y, q1, q2]
 
 #record for animation
@@ -40,12 +42,18 @@ mppi = MPPIControllerForRobotArm(
     ref_path=ref_path,
 )
 
+# iter_1 = 100
+# for k in range(1, int(iter_1) + 1):
+#     t = k * dt
+
+#     Theta = t
+#     r, XE, YE = Inverse_Kinemetic(Theta)
 
 for k in range(1, int(iter) + 1):
     t = k * dt
 
-    #Theta = t
-    #r, XE, YE = Inverse_Kinemetic(Theta)
+    Theta = t
+    r, XE, YE = Inverse_Kinemetic(Theta)
     #r은 q1, q2가 따라야 하는 것. XE는 X가 따라야 하는 것, YE는 Y가 따라야 하는 것
     # print(r, "||", XE, "||", YE)
     # if t > 1:
@@ -54,19 +62,23 @@ for k in range(1, int(iter) + 1):
     # else:
     #     dr = np.array([0, 0])
     #     ddr = np.array([0, 0])
-    
+    position = x[0:2]
+    q_state = x[2:4]
+    dq_state = x[4:6]
     optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list = mppi.calc_control_input(
-        observed_x = x, dq=dq
+        observed_x = x
     )
 
     # v = Controller(x, r, dr, ddr)
     # u = Feedback_linearization(x, v)
-
-    x[2:4] += dt * Arm_Dynamic(x, u)
-    x[0:2] += dt * x[2:4]
-
-    x1, y1, x2, y2 = Forward_Kinemetic(x[0:2])
-
+    
+    dq_state += dt * Arm_Dynamic(q_state, dq_state, optimal_input)
+    q_state += dt * dq_state
+    #print(f"qstate = {q_state}")
+    x1, y1, x2, y2 = Forward_Kinemetic(q_state)
+    x[0] = x2
+    x[1] = y2
+    print(f"k = {k}, x2 = {x2}, y2 = {y2}, qstate = {q_state}")
     if k == 1:
         continue
     rq_rec[k, :] = r
@@ -74,8 +86,8 @@ for k in range(1, int(iter) + 1):
     ry_rec[k, :] = YE
     x_rec[k, :] = [x1, x2]
     y_rec[k, :] = [y1, y2]
-    q_rec[k, :] = x[0:2]
-    u_rec[k, :] = u
+    q_rec[k, :] = q_state
+    u_rec[k, :] = optimal_input
     t_rec[k] = t
 
 
@@ -127,12 +139,12 @@ path_x, path_y = [], []
 # index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방. 그리고 columns 번호 삭제 해야됨
 # '''
 
-#save u_rec
-b1 = np.array(u_rec[4:,0]).reshape(-1, 1)
-b2 = np.array(u_rec[4:,1]).reshape(-1, 1)
-b3 = np.concatenate((b1, b2), axis = 1)
-df1 = pd.DataFrame(b3)
-df1.to_csv("u_ref")
+# #save u_rec
+# b1 = np.array(u_rec[4:,0]).reshape(-1, 1)
+# b2 = np.array(u_rec[4:,1]).reshape(-1, 1)
+# b3 = np.concatenate((b1, b2), axis = 1)
+# df1 = pd.DataFrame(b3)
+# df1.to_csv("u_ref")
 
 def update(frame):
     Robot_X1 = x_rec[frame, 0]
@@ -155,7 +167,7 @@ ani = animation.FuncAnimation(fig, update, frames=range(
     0, int(iter)+1, 10), blit=True, interval=5, repeat=False)
 plt.show()
 
-############################
+###########################
 # plt.figure(1)
 
 # plt.subplot(2, 2, 1)
