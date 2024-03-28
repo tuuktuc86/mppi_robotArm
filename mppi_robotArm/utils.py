@@ -104,12 +104,12 @@ def Controller(x, r, dr, ddr):
 class MPPIControllerForRobotArm():
     def __init__(
             self,
-            max_u1 = 5, #값 보고 임의로 설정
-            max_u2 = 5, #값 보고 임의로 설정
+            max_u1 = 2, #값 보고 임의로 설정
+            max_u2 = 2, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
             number_of_samples_K : int = 20,
-            sigma: np.ndarray = np.array([[1, 0.0], [0.0, 1]]),
+            sigma: np.ndarray = np.array([[0, 5], [1, 0]]),
             stage_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             param_exploration: float = 0.0,
@@ -304,6 +304,8 @@ class MPPIControllerForRobotArm():
     def _calc_epsilon(self, sigma: np.ndarray, size_sample: int, size_time_step: int, size_dim_u: int) -> np.ndarray:
         """sample epsilon"""
         # check if sigma row size == sigma col size == size_dim_u and size_dim_u > 0
+
+        #sigma의 element가 다 같은 행렬이면 안됨
         if sigma.shape[0] != sigma.shape[1] or sigma.shape[0] != size_dim_u or size_dim_u < 1:
             print("[ERROR] sigma must be a square matrix with the size of size_dim_u.")
             raise ValueError

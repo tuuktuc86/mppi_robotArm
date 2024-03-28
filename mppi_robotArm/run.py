@@ -11,12 +11,13 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 3
+sim_time = 2
 dt = params['Ts']
 iter = sim_time/dt
 
 
-x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,0, 0]) # x, y, q1, q2, dq1, dq2
+x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,0, 0]) # x, y, q1, q2, dq1, dq2 
+#원래 값은 ddq가 0,0
 #x = np.array([1.39700249916682, 0.859900049988097, 1.35193891583351, -1.05368674959499,0, 0]) # x, y, q1, q2, dq1, dq2
 
 trajName = 'circle'
@@ -124,7 +125,7 @@ for k in range(1, int(iter) + 1):
     q_rec[k, :] = q_state
     u_rec[k, :] = optimal_input
     t_rec[k] = t
-    break
+    
 
 
 
@@ -140,6 +141,8 @@ fig, ax = plt.subplots()
 #plt.style.use('default')
 
 ax.axis('equal')
+#원래는 다 3
+#비교용 1.39, 1.42, 0.770, 0.820
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
 ax.grid(True)
@@ -159,11 +162,11 @@ Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b')
 
 
 #첫번째 경우만 사용해야됨. 
-best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--g')
-colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
+# best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--k',)
+# colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
 
-for i in range(len(sample_rec)):
-    sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i])
+# for i in range(len(sample_rec)):
+#     sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i])
 
 
 path_x, path_y = [], []

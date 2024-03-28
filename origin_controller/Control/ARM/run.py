@@ -43,12 +43,14 @@ for k in range(1, int(iter) + 1):
     # print("****")
     # print(q.shape) q, dqshape(2,)
     # print(dq.shape)
-    print(f"k = {k}")
-    dq += dt * Arm_Dynamic(q, dq, u)
+    #print(f"k = {k}")
+    ddq = Arm_Dynamic(q, dq, u)
+    dq += dt * ddq
     q += dt * dq
     
     x1, y1, x2, y2 = Forward_Kinemetic(q)
-
+    print(f"k = {k}", "ddq = ", ddq)
+    
     if k == 1:
         continue
     rq_rec[k, :] = r
@@ -120,61 +122,61 @@ def update(frame):
 
 
 ani = animation.FuncAnimation(fig, update, frames=range(
-    0, int(iter)+1, 10), blit=True, interval=5, repeat=False)
+    0, int(iter)+1, 10), blit=True, interval=20, repeat=False)
 plt.show()
 
-############################
-plt.figure(1)
+# ############################
+# plt.figure(1)
 
-plt.subplot(2, 2, 1)
-plt.plot(t_rec, 180/np.pi*q_rec[:, 0], 'k', t_rec,
-         180/np.pi*rq_rec[:, 0], '--b', linewidth=1.2)
-plt.title('Theta 1 Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('Theta (Deg)')
-plt.axis([0, 10, -10, 160])
-plt.legend(['Theta 1 Output', 'Theta 1 Input'])
-plt.grid(True)
+# plt.subplot(2, 2, 1)
+# plt.plot(t_rec, 180/np.pi*q_rec[:, 0], 'k', t_rec,
+#          180/np.pi*rq_rec[:, 0], '--b', linewidth=1.2)
+# plt.title('Theta 1 Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('Theta (Deg)')
+# plt.axis([0, 10, -10, 160])
+# plt.legend(['Theta 1 Output', 'Theta 1 Input'])
+# plt.grid(True)
 
-plt.subplot(2, 2, 2)
-plt.plot(t_rec, 180/np.pi*q_rec[:, 1], 'k', t_rec,
-         180/np.pi*rq_rec[:, 1], '--b', linewidth=1.2)
-plt.title('Theta 2 Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('Theta (Deg)')
-plt.axis([0, 10, -160, 10])
-plt.legend(['Theta 2 Output', 'Theta 2 Input'])
-plt.grid(True)
+# plt.subplot(2, 2, 2)
+# plt.plot(t_rec, 180/np.pi*q_rec[:, 1], 'k', t_rec,
+#          180/np.pi*rq_rec[:, 1], '--b', linewidth=1.2)
+# plt.title('Theta 2 Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('Theta (Deg)')
+# plt.axis([0, 10, -160, 10])
+# plt.legend(['Theta 2 Output', 'Theta 2 Input'])
+# plt.grid(True)
 
-plt.subplot(2, 2, 3)
-plt.plot(t_rec, x_rec[:, 1], 'k', t_rec, rx_rec[:, 0], '--b', linewidth=1.2)
-plt.title('X(end point) Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('X (m)')
-plt.axis([0, 10, -1, 4])
-plt.legend(['X output', 'X input'])
-plt.grid(True)
+# plt.subplot(2, 2, 3)
+# plt.plot(t_rec, x_rec[:, 1], 'k', t_rec, rx_rec[:, 0], '--b', linewidth=1.2)
+# plt.title('X(end point) Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('X (m)')
+# plt.axis([0, 10, -1, 4])
+# plt.legend(['X output', 'X input'])
+# plt.grid(True)
 
-plt.subplot(2, 2, 4)
-plt.plot(t_rec, y_rec[:, 1], 'k', t_rec, ry_rec[:, 0], '--b', linewidth=1.2)
-plt.title('Y(end point) Input & Output')
-plt.xlabel('Time(s)')
-plt.ylabel('Y (m)')
-plt.axis([0, 10, -2, 4])
-plt.legend(['Y output', 'Y input'])
-plt.grid(True)
+# plt.subplot(2, 2, 4)
+# plt.plot(t_rec, y_rec[:, 1], 'k', t_rec, ry_rec[:, 0], '--b', linewidth=1.2)
+# plt.title('Y(end point) Input & Output')
+# plt.xlabel('Time(s)')
+# plt.ylabel('Y (m)')
+# plt.axis([0, 10, -2, 4])
+# plt.legend(['Y output', 'Y input'])
+# plt.grid(True)
 
-############################
-plt.figure(2)
+# ############################
+# plt.figure(2)
 
-plt.subplot(2, 1, 1)
-plt.plot(t_rec, u_rec[:, 0], 'k', linewidth=1.2)
-plt.title('u(1)')
-plt.grid(True)
+# plt.subplot(2, 1, 1)
+# plt.plot(t_rec, u_rec[:, 0], 'k', linewidth=1.2)
+# plt.title('u(1)')
+# plt.grid(True)
 
-plt.subplot(2, 1, 2)
-plt.plot(t_rec, u_rec[:, 1], 'k', linewidth=1.2)
-plt.title('u(2)')
-plt.grid(True)
+# plt.subplot(2, 1, 2)
+# plt.plot(t_rec, u_rec[:, 1], 'k', linewidth=1.2)
+# plt.title('u(2)')
+# plt.grid(True)
 
-plt.show()
+# plt.show()
