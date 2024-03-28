@@ -104,7 +104,7 @@ def Controller(x, r, dr, ddr):
 class MPPIControllerForRobotArm():
     def __init__(
             self,
-            max_u1 = 30, #값 보고 임의로 설정
+            max_u1 = 5, #값 보고 임의로 설정
             max_u2 = 5, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
@@ -175,6 +175,8 @@ class MPPIControllerForRobotArm():
                 # set initial(t=0) state x i.e. observed state of the vehicle
                 x = x0
                 #print(x)
+
+                #list가 mutable하기 때문에 deepcopy하지 않으면 state 변수들이 폭발한다. 그러니까 k가 변하면 상태가 초기화가 되어야 하는데 안될수 있다. 중요
                 position = copy.deepcopy(x[0:2])
                 q_state = copy.deepcopy(x[2:4])
                 dq_state = copy.deepcopy(x[4:6])
