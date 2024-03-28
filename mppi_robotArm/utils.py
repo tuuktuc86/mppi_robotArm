@@ -108,7 +108,7 @@ class MPPIControllerForRobotArm():
             max_u2 = 5, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
-            number_of_samples_K : int = 300,
+            number_of_samples_K : int = 20,
             sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]),
             stage_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
@@ -116,11 +116,11 @@ class MPPIControllerForRobotArm():
             param_lambda: float = 50.0,
             param_alpha: float = 1.0,
             visualize_optimal_traj = True,  # if True, optimal trajectory is visualized
-            visualze_sampled_trajs = False, # if True, sampled trajectories are visualized
+            visualze_sampled_trajs = True, # if True, sampled trajectories are visualized
     ) -> None:
         """initialize mppi controller for path-tracking"""
         # mppi parameters
-        self.dim_x = 4 # dimension of system state vector
+        self.dim_x = 6 # dimension of system state vector
         self.dim_u = 2 # dimension of control input vector
         self.T = horizon_step_T # prediction horizon
         self.K = number_of_samples_K # number of sample trajectories
@@ -227,26 +227,53 @@ class MPPIControllerForRobotArm():
 
             # calculate optimal trajectory
             optimal_traj = np.zeros((self.T, self.dim_x))
-            # if self.visualize_optimal_traj:
-            #     x = x0
-            #     for t in range(self.T):
-            #         x = self._F(x, self._g(u[t-1]))
-            #         optimal_traj[t] = x
+            if self.visualize_optimal_traj:
+                x = x0
+                position = copy.deepcopy(x[0:2])
+                q_state = copy.deepcopy(x[2:4])
+                dq_state = copy.deepcopy(x[4:6])
+
+                for t in range(self.T):
+
+                    ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
+                    dq_state += dt * ddq
+                    q_state += dt * dq_state
+
+                    x1, y1, x2, y2 = Forward_Kinemetic(q_state)
+                
+                    position = [x2, y2]
+                    data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
+                    optimal_traj[t] = data_rec
 
             # calculate sampled trajectories
             sampled_traj_list = np.zeros((self.K, self.T, self.dim_x))
             sorted_idx = np.argsort(S) # sort samples by state cost, 0th is the best sample
-            # if self.visualze_sampled_trajs:
-            #     for k in sorted_idx:
-            #         x = x0
-            #         for t in range(self.T):
-            #             x = self._F(x, self._g(v[k, t-1]))
-            #             sampled_traj_list[k, t] = x
+
+            if self.visualze_sampled_trajs:
+                for k in sorted_idx:
+                    x = x0
+                    position = copy.deepcopy(x[0:2])
+                    q_state = copy.deepcopy(x[2:4])
+                    dq_state = copy.deepcopy(x[4:6])
+
+                    for t in range(self.T):
+
+                        ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
+                        dq_state += dt * ddq
+                        q_state += dt * dq_state
+
+                        x1, y1, x2, y2 = Forward_Kinemetic(q_state)
+                    
+                        position = [x2, y2]
+                        data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
+
+                        #x = self._F(x, self._g(v[k, t-1]))
+                        sampled_traj_list[k, t] = data_rec
 
             # # update privious control input sequence (shift 1 step to the left)
             self.u_prev[:-1] = u[1:]
             self.u_prev[-1] = u[-1]
-
+            
             # return optimal control input and input sequence
             return u[0], u, optimal_traj, sampled_traj_list
             

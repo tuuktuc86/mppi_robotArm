@@ -34,7 +34,8 @@ y_rec = np.zeros((int(iter)+1, 2))
 q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
-
+best_rec = np.zeros((20, 2))
+sample_rec = np.zeros((20, 20, 2))
 ref_rec = ref_path
 
 
@@ -52,10 +53,17 @@ mppi = MPPIControllerForRobotArm(
 #     r, XE, YE = Inverse_Kinemetic(Theta)
 
 for k in range(1, int(iter) + 1):
+
     t = k * dt
 
     Theta = t
     r, XE, YE = Inverse_Kinemetic(Theta)
+
+
+
+    # best_rec = np.zeros((20, 2))
+    # sample_rec = np.zeros((20, 20, 2))
+
     #r은 q1, q2가 따라야 하는 것. XE는 X가 따라야 하는 것, YE는 Y가 따라야 하는 것
     # print(r, "||", XE, "||", YE)
     # if t > 1:
@@ -73,7 +81,6 @@ for k in range(1, int(iter) + 1):
 
     # v = Controller(x, r, dr, ddr)
     # u = Feedback_linearization(x, v)
-    
     dq_state += dt * Arm_Dynamic(q_state, dq_state, optimal_input)
     q_state += dt * dq_state
     #print(f"qstate = {q_state}")
@@ -81,6 +88,32 @@ for k in range(1, int(iter) + 1):
     x[0] = x2
     x[1] = y2
     print(f"k = {k}, x2 = {x2}, y2 = {y2}, qstate = {q_state}")
+
+
+    # trajectory 기록
+    for i in range(len(optimal_traj)):
+        best_rec[i][0] = optimal_traj[i][0]
+        best_rec[i][1] = optimal_traj[i][1]
+
+    for i in range(len(sampled_traj_list)):
+        for j in range(len(sampled_traj_list[0])):
+
+            sample_rec[i][j][0] = sampled_traj_list[i][j][0]
+            sample_rec[i][j][1] = sampled_traj_list[i][j][1]
+
+
+    # optimal, sample trajectory 확인
+    # print("best_rec")
+    # for i in range(len(best_rec)):
+    #     print(f"i = {i} //{best_rec[i][0]}, {best_rec[i][1]}")
+
+    # for i in range(len(sample_rec)):
+    #     for j in range(len(sample_rec[0])):
+            
+    #         print(f"i = {i} | j = {j} //{sample_rec[i][j][0]}, {sample_rec[i][j][1]}")
+
+    
+
     if k == 1:
         continue
     rq_rec[k, :] = r
@@ -91,6 +124,7 @@ for k in range(1, int(iter) + 1):
     q_rec[k, :] = q_state
     u_rec[k, :] = optimal_input
     t_rec[k] = t
+    break
 
 
 
@@ -101,6 +135,10 @@ Joint_1 = [0, 0]
 Joint_2 = [1, 0]
 Joint_3 = [2, 0]
 fig, ax = plt.subplots()
+
+#set style
+#plt.style.use('default')
+
 ax.axis('equal')
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
@@ -118,6 +156,15 @@ Robot_arm_2, = ax.plot([Joint_2[0], Joint_3[0]], [
 Robot_path, = ax.plot([Joint_3[0]-0.01, Joint_3[0]],
                       [Joint_3[1]-0.01, Joint_3[1]], 'r.', linewidth=0.5)
 Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b')
+
+
+#첫번째 경우만 사용해야됨. 
+best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--g')
+colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
+
+for i in range(len(sample_rec)):
+    sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i])
+
 
 path_x, path_y = [], []
 
@@ -166,7 +213,7 @@ def update(frame):
 
 
 ani = animation.FuncAnimation(fig, update, frames=range(
-    0, int(iter)+1, 10), blit=True, interval=3, repeat=True)
+    0, int(iter)+1, 10), blit=True, interval=10, repeat=True)
 plt.show()
 
 ###########################
