@@ -104,12 +104,12 @@ def Controller(x, r, dr, ddr):
 class MPPIControllerForRobotArm():
     def __init__(
             self,
-            max_u1 = 2, #값 보고 임의로 설정
-            max_u2 = 2, #값 보고 임의로 설정
+            max_u1 = 0.5, #값 보고 임의로 설정
+            max_u2 = 0.5, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
             number_of_samples_K : int = 20,
-            sigma: np.ndarray = np.array([[0, 5], [1, 0]]),
+            sigma: np.ndarray = np.array([[1, 0], [0, 1]]),
             stage_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             param_exploration: float = 0.0,
@@ -148,6 +148,7 @@ class MPPIControllerForRobotArm():
     def calc_control_input(self, observed_x: np.ndarray):
             """calculate optimal control input"""
             # load privious control input sequence
+            
             u = self.u_prev
 
             # set initial x value from observation
@@ -155,6 +156,8 @@ class MPPIControllerForRobotArm():
 
             # get the waypoint closest to current vehicle position 
             self._get_nearest_waypoint(x0[0], x0[1], update_prev_idx=True)
+            # print(f'x = {x0[0]}, y = {x0[1]}')
+            # print(self.prev_waypoints_idx)
             #print(f"serch x = {x0[0]}, y = {x0[1]}, nearestPoint = {self.prev_waypoints_idx}")
             if self.prev_waypoints_idx >= self.ref_path.shape[0]-1:
                 print("[ERROR] Reached the end of the reference path.")
