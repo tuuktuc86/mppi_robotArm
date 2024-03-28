@@ -109,7 +109,7 @@ class MPPIControllerForRobotArm():
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
             number_of_samples_K : int = 20,
-            sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]),
+            sigma: np.ndarray = np.array([[1, 0.0], [0.0, 1]]),
             stage_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             param_exploration: float = 0.0,
