@@ -158,6 +158,7 @@ class MPPIControllerForRobotArm():
             self._get_nearest_waypoint(x0[0], x0[1], update_prev_idx=True)
             # print(f'x = {x0[0]}, y = {x0[1]}')
             # print(self.prev_waypoints_idx)
+
             #print(f"serch x = {x0[0]}, y = {x0[1]}, nearestPoint = {self.prev_waypoints_idx}")
             if self.prev_waypoints_idx >= self.ref_path.shape[0]-1:
                 print("[ERROR] Reached the end of the reference path.")
@@ -314,7 +315,10 @@ class MPPIControllerForRobotArm():
             raise ValueError
 
         # sample epsilon
-        mu = np.zeros((size_dim_u)) # set average as a zero vector
+        # mu = np.zeros((size_dim_u)) # set average as a zero vector
+        mu = np.full((size_dim_u),100) 
+
+        #어쩌면 mu가 답일까?
         epsilon = np.random.multivariate_normal(mu, sigma, (size_sample, size_time_step))
         return epsilon
     

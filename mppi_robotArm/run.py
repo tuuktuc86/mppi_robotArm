@@ -11,7 +11,7 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 3
+sim_time = 0.05
 dt = params['Ts']
 iter = sim_time/dt
 
@@ -91,19 +91,21 @@ for k in range(1, int(iter) + 1):
     print(f"k = {k}, x2 = {x2}, y2 = {y2}, qstate = {q_state}")
 
 
-    # trajectory 기록
-    for i in range(len(optimal_traj)):
-        best_rec[i][0] = optimal_traj[i][0]
-        best_rec[i][1] = optimal_traj[i][1]
+    # check 1 sample traj
 
-    for i in range(len(sampled_traj_list)):
-        for j in range(len(sampled_traj_list[0])):
+    # # trajectory 기록
+    # for i in range(len(optimal_traj)):
+    #     best_rec[i][0] = optimal_traj[i][0]
+    #     best_rec[i][1] = optimal_traj[i][1]
 
-            sample_rec[i][j][0] = sampled_traj_list[i][j][0]
-            sample_rec[i][j][1] = sampled_traj_list[i][j][1]
+    # for i in range(len(sampled_traj_list)):
+    #     for j in range(len(sampled_traj_list[0])):
+
+    #         sample_rec[i][j][0] = sampled_traj_list[i][j][0]
+    #         sample_rec[i][j][1] = sampled_traj_list[i][j][1]
 
 
-    # optimal, sample trajectory 확인
+    # # optimal, sample trajectory 확인
     # print("best_rec")
     # for i in range(len(best_rec)):
     #     print(f"i = {i} //{best_rec[i][0]}, {best_rec[i][1]}")
@@ -125,7 +127,11 @@ for k in range(1, int(iter) + 1):
     q_rec[k, :] = q_state
     u_rec[k, :] = optimal_input
     t_rec[k] = t
-    
+
+
+    # check 1 sample traj
+
+    # break
 
 
 
@@ -160,8 +166,8 @@ Robot_path, = ax.plot([Joint_3[0]-0.01, Joint_3[0]],
                       [Joint_3[1]-0.01, Joint_3[1]], 'r.', linewidth=0.5)
 Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b')
 
-
-#첫번째 경우만 사용해야됨. 
+# check 1 sample traj
+# #첫번째 경우만 사용해야됨. 
 # best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--k',)
 # colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
 
@@ -206,7 +212,7 @@ def update(frame):
 
     Robot_arm_1.set_data([Joint_1[0], Robot_X1], [Joint_1[1], Robot_Y1])
     Robot_arm_2.set_data([Robot_X1, Robot_X2], [Robot_Y1, Robot_Y2])
-    Robot_path.set_data(Robot_X2, Robot_Y2)
+    Robot_path.set_data([Robot_X2], [Robot_Y2])
 
     path_x.append(Robot_X2)
     path_y.append(Robot_Y2)
@@ -216,7 +222,8 @@ def update(frame):
 
 
 ani = animation.FuncAnimation(fig, update, frames=range(
-    0, int(iter)+1, 10), blit=True, interval=10, repeat=True)
+    0, int(iter)+1, 1), blit=True, interval=100, repeat=True)
+#간격은 frame으로 시간은 interval
 plt.show()
 
 ###########################
