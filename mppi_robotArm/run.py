@@ -11,7 +11,7 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 0.05
+sim_time = 1
 dt = params['Ts']
 iter = sim_time/dt
 
@@ -226,7 +226,7 @@ def update(frame):
 
 
 ani = animation.FuncAnimation(fig, update, frames=range(
-    0, int(iter)+1, 1), blit=True, interval=100, repeat=True)
+    0, int(iter)+1, 10), blit=True, interval=100, repeat=True)
 #간격은 frame으로 시간은 interval
 plt.show()
 

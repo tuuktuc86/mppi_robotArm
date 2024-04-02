@@ -137,7 +137,13 @@ class MPPIControllerForRobotArm():
         self.param_gamma = self.param_lambda * (1.0 - (self.param_alpha))  # constant parameter of mppi
 
         # mppi variables
-        self.u_prev = np.zeros((self.T, self.dim_u))
+        #self.u_prev = np.zeros((self.T, self.dim_u))
+
+        self.u_prev = np.array([[10, 4.5] for i in range(self.T)])
+
+        #u는 진짜 많이 변해야 1정도 변함
+        #원본 trajectory
+        #k = 1 u = [10.35226742  4.51407217] x = 1.39993 y = 0.80897 q = [ 1.1532978  -1.25862889] dq = [-0.00037483 -0.00248918] ddq = [-0.03748314 -0.24891826]
         self.max_u1 = max_u1 # [rad]
         self.max_u2 = max_u2 # [m/s^2]
         # ref_path info
@@ -150,7 +156,8 @@ class MPPIControllerForRobotArm():
             # load privious control input sequence
             
             u = self.u_prev
-
+            # print(u)
+            # print("-----------------")
             # set initial x value from observation
             x0 = observed_x #[x, y, q1, q2, dq1, dq2]
 
@@ -199,6 +206,8 @@ class MPPIControllerForRobotArm():
                     # update x
                     # print("********")
                     # print(q_state.shape, dq_state.shape)
+                    
+                    
                     ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
                     dq_state += dt * ddq
                     q_state += dt * dq_state
@@ -277,6 +286,10 @@ class MPPIControllerForRobotArm():
             # # update privious control input sequence (shift 1 step to the left)
             self.u_prev[:-1] = u[1:]
             self.u_prev[-1] = u[-1]
+
+            # print("==============u=================")
+            # print(self.u_prev)
+            # raise ValueError
             
             # return optimal control input and input sequence
             return u[0], u, optimal_traj, sampled_traj_list
@@ -315,8 +328,8 @@ class MPPIControllerForRobotArm():
             raise ValueError
 
         # sample epsilon
-        # mu = np.zeros((size_dim_u)) # set average as a zero vector
-        mu = np.full((size_dim_u),100) 
+        mu = np.zeros((size_dim_u)) # set average as a zero vector
+        #mu = np.full((size_dim_u),100) 
 
         #어쩌면 mu가 답일까?
         epsilon = np.random.multivariate_normal(mu, sigma, (size_sample, size_time_step))

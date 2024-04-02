@@ -49,8 +49,10 @@ for k in range(1, int(iter) + 1):
     q += dt * dq
     
     x1, y1, x2, y2 = Forward_Kinemetic(q)
-    print(f"k = {k}", "ddq = ", ddq)
-    
+    print(f"k = {k} u = {u} x = {x2:.5f} y = {y2:.5f} q = {q} dq = {dq} ddq = {ddq}")
+    if k == 100:
+        break
+
     if k == 1:
         continue
     rq_rec[k, :] = r
