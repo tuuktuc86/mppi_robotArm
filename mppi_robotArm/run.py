@@ -89,6 +89,10 @@ for k in range(1, int(iter) + 1):
     x[0] = x2
     x[1] = y2
     print(f"k = {k}, x2 = {x2}, y2 = {y2}, qstate = {q_state}")
+    
+    #set next state
+    next_state = np.concatenate((position, q_state, dq_state), axis = 0)
+    x = next_state
 
 
     # check 1 sample traj
@@ -226,7 +230,7 @@ ani = animation.FuncAnimation(fig, update, frames=range(
 #간격은 frame으로 시간은 interval
 plt.show()
 
-###########################
+##########################
 # plt.figure(1)
 
 # plt.subplot(2, 2, 1)
