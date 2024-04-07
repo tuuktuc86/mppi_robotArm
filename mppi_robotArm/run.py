@@ -11,7 +11,7 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 1
+sim_time = 3
 dt = params['Ts']
 iter = sim_time/dt
 
@@ -108,53 +108,53 @@ for k in range(1, int(iter) + 1):
     
 
     # check 1 sample traj
-    # check 1 sample traj
-    if k == 4:
+         
+    # trajectory 기록
+    for i in range(len(optimal_traj)):
+        best_rec[i][0] = optimal_traj[i][0]
+        best_rec[i][1] = optimal_traj[i][1]
+
+    for i in range(len(sampled_traj_list)):
+        for j in range(len(sampled_traj_list[0])):
+
+            sample_rec[i][j][0] = sampled_traj_list[i][j][0]
+            sample_rec[i][j][1] = sampled_traj_list[i][j][1]
+
+
+    # # optimal, sample trajectory 확인
+    # print("best_rec")
+    # for i in range(len(best_rec)):
+    #     print(f"i = {i} //{best_rec[i][0]}, {best_rec[i][1]}")
+
+    # for i in range(len(sample_rec)):
+    #     for j in range(len(sample_rec[0])):
+            
+    #         print(f"i = {i} | j = {j} //{sample_rec[i][j][0]}, {sample_rec[i][j][1]}")
+
+    #여기부터 수정
+    Joint_1 = [0, 0]
+    Joint_2 = [1, 0]
+    Joint_3 = [2, 0]
+    fig, ax = plt.subplots()
+    ax.set_xlim(x[0]-0.002, x[0]+0.002)
+    ax.set_ylim(x[1]-0.002, x[1]+0.002)
+    ax.grid(True)
+    ax.set_xlabel('X (m)')
+    ax.set_ylabel('Y (m)')
+    ax.set_title('Robot Movement')
+    Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b', )
+    
+    colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
+
+    for i in range(len(sample_rec)):
+        #sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i], linewidth=0.5)
+        sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = 'gray', linewidth=0.5)
+    best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--r',linewidth=4)
+    plt.show()
+
+
+
         
-
-        # trajectory 기록
-        for i in range(len(optimal_traj)):
-            best_rec[i][0] = optimal_traj[i][0]
-            best_rec[i][1] = optimal_traj[i][1]
-
-        for i in range(len(sampled_traj_list)):
-            for j in range(len(sampled_traj_list[0])):
-
-                sample_rec[i][j][0] = sampled_traj_list[i][j][0]
-                sample_rec[i][j][1] = sampled_traj_list[i][j][1]
-
-
-        # optimal, sample trajectory 확인
-        print("best_rec")
-        for i in range(len(best_rec)):
-            print(f"i = {i} //{best_rec[i][0]}, {best_rec[i][1]}")
-
-        for i in range(len(sample_rec)):
-            for j in range(len(sample_rec[0])):
-                
-                print(f"i = {i} | j = {j} //{sample_rec[i][j][0]}, {sample_rec[i][j][1]}")
-        
-        #여기부터 수정
-        Joint_1 = [0, 0]
-        Joint_2 = [1, 0]
-        Joint_3 = [2, 0]
-        fig, ax = plt.subplots()
-        ax.set_xlim(-3, 3)
-        ax.set_ylim(-3, 3)
-        ax.grid(True)
-        ax.set_xlabel('X (m)')
-        ax.set_ylabel('Y (m)')
-        ax.set_title('Robot Movement')
-
-        best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--k',)
-        colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
-
-        for i in range(len(sample_rec)):
-            sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i])
-
-
-
-        break
     
 
     if k == 1:
