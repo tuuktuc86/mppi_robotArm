@@ -1,6 +1,6 @@
 def SYS_PARAMS():
     params = {
-        'Ts': 0.01,
+        'Ts': 0.005,
         'm1': 1,
         'm2': 1,
         'l1': 1,

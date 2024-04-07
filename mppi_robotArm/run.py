@@ -18,13 +18,16 @@ iter = sim_time/dt
 
 #x = np.array([1.03960371764376, 1.35008186526306, 1.46563474895373, -1.10207211330654,0, 0]) # x, y, q1, q2, dq1, dq2  #231번점
 #원래 값은 ddq가 0,0
-x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,0, 0]) # x, y, q1, q2, dq1, dq2
+x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,-0.000466398432713, -0.003120159413556]) # x, y, q1, q2, dq1, dq2
 
 trajName = 'circle'
 isDesturbance = 0
 ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
 #ref_path = np.genfromtxt('reference3_0.01.csv', delimiter=',', skip_header=1)
 #print(ref_path.shape) #1214, 4 [x, y, q1, q2]
+
+#to find optimal input
+# origin_path= np.genfromtxt('origin_reference_10_0.005.csv', delimiter=',', skip_header=1)
 
 #record for animation
 rq_rec = np.zeros((int(iter)+1, 2))
@@ -36,11 +39,10 @@ q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
 best_rec = np.zeros((20, 2))
-sample_rec = np.zeros((20, 20, 2))
+sample_rec = np.zeros((100, 20, 2))
 ref_rec = ref_path
 
 
-dq = np.array([0.0, 0.0])
 # initialize a mppi controller for the vehicle
 mppi = MPPIControllerForRobotArm(
     ref_path=ref_path,
@@ -80,45 +82,79 @@ for k in range(1, int(iter) + 1):
         observed_x = x
     )
 
+    #to find optimal input
+    # optimal_input = origin_path[k, 10:12]
+    # q_state = origin_path[k, 4:6]
+    # dq_state = origin_path[k, 6:8]
+
     # v = Controller(x, r, dr, ddr)
     # u = Feedback_linearization(x, v)
     dq_state += dt * Arm_Dynamic(q_state, dq_state, optimal_input)
     q_state += dt * dq_state
     #print(f"qstate = {q_state}")
     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
-    x[0] = x2
-    x[1] = y2
-    print(f"k = {k}, x2 = {x2}, y2 = {y2}, qstate = {q_state}")
+    position[0] = x2
+    position[1] = y2
+    # x[2] = q_state[0]
+    # x[3] = q_state[1]
+    # x[4] = dq_state[0]
+    # x[5] = dq_state[1]
     
     #set next state
     next_state = np.concatenate((position, q_state, dq_state), axis = 0)
     x = next_state
-
+    print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {optimal_input}")
+    
+    
 
     # check 1 sample traj
+    # check 1 sample traj
+    if k == 4:
+        
 
-    # # trajectory 기록
-    # for i in range(len(optimal_traj)):
-    #     best_rec[i][0] = optimal_traj[i][0]
-    #     best_rec[i][1] = optimal_traj[i][1]
+        # trajectory 기록
+        for i in range(len(optimal_traj)):
+            best_rec[i][0] = optimal_traj[i][0]
+            best_rec[i][1] = optimal_traj[i][1]
 
-    # for i in range(len(sampled_traj_list)):
-    #     for j in range(len(sampled_traj_list[0])):
+        for i in range(len(sampled_traj_list)):
+            for j in range(len(sampled_traj_list[0])):
 
-    #         sample_rec[i][j][0] = sampled_traj_list[i][j][0]
-    #         sample_rec[i][j][1] = sampled_traj_list[i][j][1]
+                sample_rec[i][j][0] = sampled_traj_list[i][j][0]
+                sample_rec[i][j][1] = sampled_traj_list[i][j][1]
 
 
-    # # optimal, sample trajectory 확인
-    # print("best_rec")
-    # for i in range(len(best_rec)):
-    #     print(f"i = {i} //{best_rec[i][0]}, {best_rec[i][1]}")
+        # optimal, sample trajectory 확인
+        print("best_rec")
+        for i in range(len(best_rec)):
+            print(f"i = {i} //{best_rec[i][0]}, {best_rec[i][1]}")
 
-    # for i in range(len(sample_rec)):
-    #     for j in range(len(sample_rec[0])):
-            
-    #         print(f"i = {i} | j = {j} //{sample_rec[i][j][0]}, {sample_rec[i][j][1]}")
+        for i in range(len(sample_rec)):
+            for j in range(len(sample_rec[0])):
+                
+                print(f"i = {i} | j = {j} //{sample_rec[i][j][0]}, {sample_rec[i][j][1]}")
+        
+        #여기부터 수정
+        Joint_1 = [0, 0]
+        Joint_2 = [1, 0]
+        Joint_3 = [2, 0]
+        fig, ax = plt.subplots()
+        ax.set_xlim(-3, 3)
+        ax.set_ylim(-3, 3)
+        ax.grid(True)
+        ax.set_xlabel('X (m)')
+        ax.set_ylabel('Y (m)')
+        ax.set_title('Robot Movement')
 
+        best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--k',)
+        colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
+
+        for i in range(len(sample_rec)):
+            sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i])
+
+
+
+        break
     
 
     if k == 1:
@@ -133,10 +169,7 @@ for k in range(1, int(iter) + 1):
     t_rec[k] = t
 
 
-    # check 1 sample traj
-
-    # break
-
+    
 
 
 
@@ -170,7 +203,7 @@ Robot_path, = ax.plot([Joint_3[0]-0.01, Joint_3[0]],
                       [Joint_3[1]-0.01, Joint_3[1]], 'r.', linewidth=0.5)
 Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b')
 
-# check 1 sample traj
+# # check 1 sample traj
 # #첫번째 경우만 사용해야됨. 
 # best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--k',)
 # colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분

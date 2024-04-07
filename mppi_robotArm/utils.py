@@ -104,11 +104,11 @@ def Controller(x, r, dr, ddr):
 class MPPIControllerForRobotArm():
     def __init__(
             self,
-            max_u1 = 0.5, #값 보고 임의로 설정
-            max_u2 = 0.5, #값 보고 임의로 설정
+            max_u1 = 20, #값 보고 임의로 설정
+            max_u2 = 10, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
-            number_of_samples_K : int = 20,
+            number_of_samples_K : int = 100,
             sigma: np.ndarray = np.array([[1, 0], [0, 1]]),
             stage_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
@@ -139,7 +139,7 @@ class MPPIControllerForRobotArm():
         # mppi variables
         #self.u_prev = np.zeros((self.T, self.dim_u))
 
-        self.u_prev = np.array([[10, 4.5] for i in range(self.T)])
+        self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
 
         #u는 진짜 많이 변해야 1정도 변함
         #원본 trajectory
@@ -339,8 +339,8 @@ class MPPIControllerForRobotArm():
         """clamp input"""
         # limit control inputs
   
-        v[0] = np.clip(v[0], -self.max_u1, self.max_u1) # limit steering input
-        v[1] = np.clip(v[1], -self.max_u2, self.max_u2) # limit acceleraiton input
+        v[0] = np.clip(v[0], -self.max_u1, self.max_u1) # limit u1 input
+        v[1] = np.clip(v[1], -self.max_u2, self.max_u2) # limit u2 input
         
         return v
     
