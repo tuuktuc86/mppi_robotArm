@@ -18,7 +18,8 @@ class MPPIControllerForPathTracking():
             param_exploration: float = 0.0,
             param_lambda: float = 50.0,
             param_alpha: float = 1.0,
-            sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]), 
+            #sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]), 
+            sigma: np.ndarray = np.array([[5, 3], [0.5, 0.5]]), 
             stage_cost_weight: np.ndarray = np.array([50.0, 50.0, 1.0, 20.0]), # weight for [x, y, yaw, v]
             terminal_cost_weight: np.ndarray = np.array([50.0, 50.0, 1.0, 20.0]), # weight for [x, y, yaw, v]
             visualize_optimal_traj = True,  # if True, optimal trajectory is visualized
@@ -326,10 +327,10 @@ def run_simulation_mppi_pathtracking() -> None:
         # update states of vehicle
         vehicle.update(u=optimal_input, delta_t=delta_t, optimal_traj=optimal_traj[:, 0:2], sampled_traj_list=sampled_traj_list[:, :, 0:2])
 
-    vList = np.array(vList)
-    vList.max(axis=0)
+    # vList = np.array(vList)
+    # vList.max(axis=0)
     # save animation
-    #vehicle.save_animation("mppi_pathtracking_demo.mp4", interval=int(delta_t * 1000), movie_writer="ffmpeg") # ffmpeg is required to write mp4 file
+    vehicle.save_animation("mppi_pathtracking_demo.mp4", interval=int(delta_t * 1000), movie_writer="ffmpeg") # ffmpeg is required to write mp4 file
 
 if __name__ == "__main__":
     run_simulation_mppi_pathtracking()

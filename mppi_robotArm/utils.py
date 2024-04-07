@@ -109,7 +109,9 @@ class MPPIControllerForRobotArm():
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 20,
             number_of_samples_K : int = 100,
-            sigma: np.ndarray = np.array([[1, 0], [0, 1]]),
+            sigma: np.ndarray = np.array([[5, 3], [0.5, 0.5]]),
+
+            #지금까지중에는 5, 3, 1, 1이 가장 좋은듯
             stage_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10.0, 10.0]), # weight for [x, y]
             param_exploration: float = 0.0,
@@ -140,7 +142,7 @@ class MPPIControllerForRobotArm():
         #self.u_prev = np.zeros((self.T, self.dim_u))
 
         self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
-
+        #중력때문에 시스템이 영향을 받기는 하는 것 같다. 그냥 느낌.
         #u는 진짜 많이 변해야 1정도 변함
         #원본 trajectory
         #k = 1 u = [10.35226742  4.51407217] x = 1.39993 y = 0.80897 q = [ 1.1532978  -1.25862889] dq = [-0.00037483 -0.00248918] ddq = [-0.03748314 -0.24891826]
@@ -237,14 +239,15 @@ class MPPIControllerForRobotArm():
 
             # update control input sequence
             u += w_epsilon
+            #u에 w_epsilon 더해서 optimal input 생성. 그러나 optimal traj는 v를 이용하기 때문에 같다고는 볼 수 없을 것 같음
 
             # calculate optimal trajectory
             optimal_traj = np.zeros((self.T, self.dim_x))
             if self.visualize_optimal_traj:
                 x = x0
-                position = copy.deepcopy(x[0:2])
+                position= copy.deepcopy(x[0:2])
                 q_state = copy.deepcopy(x[2:4])
-                dq_state = copy.deepcopy(x[4:6])
+                dq_state= copy.deepcopy(x[4:6])
 
                 for t in range(self.T):
 
@@ -254,9 +257,10 @@ class MPPIControllerForRobotArm():
 
                     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
                 
-                    position = [x2, y2]
+                    position_opt = [x2, y2]
                     data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
                     optimal_traj[t] = data_rec
+                    #이거 가중치 계산한 샘플링이 아니라 지금 거 중에 가장 좋은거 경로 찍는거임 그래서 샘플 경로 하나랑 똑같음
 
             # calculate sampled trajectories
             sampled_traj_list = np.zeros((self.K, self.T, self.dim_x))
@@ -389,6 +393,7 @@ class MPPIControllerForRobotArm():
         """apply moving average filter for smoothing input sequence
         Ref. https://zenn.dev/bluepost/articles/1b7b580ab54e95
         """
+        #xx (T, dimu)
         b = np.ones(window_size)/window_size
         dim = xx.shape[1]
         xx_mean = np.zeros(xx.shape)
