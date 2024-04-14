@@ -224,6 +224,10 @@ class MPPIControllerForRobotArm():
 
                 # add terminal cost
                 S[k] += self._phi(position)
+                # print(f"==k = {k}====v==========")
+                # print(v[k])
+                # print("===========s============")
+                # print(S[k])
 
             # compute information theoretic weights for each sample
             w = self._compute_weights(S)
@@ -266,14 +270,21 @@ class MPPIControllerForRobotArm():
             sampled_traj_list = np.zeros((self.K, self.T+1, self.dim_x))
             sorted_idx = np.argsort(S) # sort samples by state cost, 0th is the best sample
 
+            # #try this u
+            # best_v = []
+            sampling_best_traj = np.zeros((self.T, self.dim_x))
             if self.visualze_sampled_trajs:
                 for k in sorted_idx:
+                    # if k == 0:
+                    #     best_v = v[k]
                     x = x0
                     position = copy.deepcopy(x[0:2])
                     q_state = copy.deepcopy(x[2:4])
                     dq_state = copy.deepcopy(x[4:6])
                     sampled_traj_list[k, 0] = x
                     for t in range(1, self.T+1):
+                        
+
 
                         ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
                         dq_state += dt * ddq
@@ -286,17 +297,20 @@ class MPPIControllerForRobotArm():
 
                         #x = self._F(x, self._g(v[k, t-1]))
                         sampled_traj_list[k, t] = data_rec
+                        if k == 0:
+                            sampling_best_traj[t-1] = data_rec
 
             # # update privious control input sequence (shift 1 step to the left)
             self.u_prev[:-1] = u[1:]
             self.u_prev[-1] = u[-1]
-
+            #self.u_prev[:-1] = best_v[1:]
+            #self.u_prev[-1] = best_v[-1]
             # print("==============u=================")
             # print(self.u_prev)
             # raise ValueError
             
             # return optimal control input and input sequence
-            return u[0], u, optimal_traj, sampled_traj_list
+            return u[0], u, optimal_traj, sampled_traj_list, sampling_best_traj
             
 
     def _get_nearest_waypoint(self, x: float, y: float, update_prev_idx: bool = False):
