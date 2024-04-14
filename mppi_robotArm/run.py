@@ -162,8 +162,8 @@ for k in range(1, int(iter) + 1):
     best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--r',linewidth=4)
     position_path = ax.plot(x_rec[2:2+k-1,1], y_rec[2:2+k-1, 1], '--g', linewidth=4)
     sampling_best = ax.plot(sampling_best_traj[:,0], sampling_best_traj[:, 1], color = 'orange', linewidth = 2)
-    print(x_rec[2+k-2:2+k-1, 1], y_rec[2+k-2:2+k-1, 1])
-    print(sampling_best_traj)
+    #print(x_rec[2+k-2:2+k-1, 1], y_rec[2+k-2:2+k-1, 1])
+    #print(sampling_best_traj)
     #print(best_rec)
     plt.show()
 
