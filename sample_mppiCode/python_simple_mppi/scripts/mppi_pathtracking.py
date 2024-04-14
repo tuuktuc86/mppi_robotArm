@@ -49,7 +49,8 @@ class MPPIControllerForPathTracking():
         self.ref_path = ref_path
 
         # mppi variables
-        self.u_prev = np.zeros((self.T, self.dim_u))
+        #self.u_prev = np.zeros((self.T, self.dim_u))
+        self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
 
         # ref_path info
         self.prev_waypoints_idx = 0

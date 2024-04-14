@@ -242,16 +242,16 @@ class MPPIControllerForRobotArm():
             #u에 w_epsilon 더해서 optimal input 생성. 그러나 optimal traj는 v를 이용하기 때문에 같다고는 볼 수 없을 것 같음
 
             # calculate optimal trajectory
-            optimal_traj = np.zeros((self.T, self.dim_x))
+            optimal_traj = np.zeros((self.T+1, self.dim_x))
             if self.visualize_optimal_traj:
                 x = x0
                 position= copy.deepcopy(x[0:2])
                 q_state = copy.deepcopy(x[2:4])
                 dq_state= copy.deepcopy(x[4:6])
-
-                for t in range(self.T):
-
-                    ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
+                optimal_traj[0] = x
+                for t in range(1, self.T+1):
+                    ddq = Arm_Dynamic(q_state, dq_state, self._g(u[t-1]))
+                    #ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
                     dq_state += dt * ddq
                     q_state += dt * dq_state
 
@@ -263,7 +263,7 @@ class MPPIControllerForRobotArm():
                     #이거 가중치 계산한 샘플링이 아니라 지금 거 중에 가장 좋은거 경로 찍는거임 그래서 샘플 경로 하나랑 똑같음
 
             # calculate sampled trajectories
-            sampled_traj_list = np.zeros((self.K, self.T, self.dim_x))
+            sampled_traj_list = np.zeros((self.K, self.T+1, self.dim_x))
             sorted_idx = np.argsort(S) # sort samples by state cost, 0th is the best sample
 
             if self.visualze_sampled_trajs:
@@ -272,8 +272,8 @@ class MPPIControllerForRobotArm():
                     position = copy.deepcopy(x[0:2])
                     q_state = copy.deepcopy(x[2:4])
                     dq_state = copy.deepcopy(x[4:6])
-
-                    for t in range(self.T):
+                    sampled_traj_list[k, 0] = x
+                    for t in range(1, self.T+1):
 
                         ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
                         dq_state += dt * ddq
