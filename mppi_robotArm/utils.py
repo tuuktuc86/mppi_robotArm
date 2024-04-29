@@ -107,13 +107,13 @@ class MPPIControllerForRobotArm():
             max_u1 = 20, #값 보고 임의로 설정
             max_u2 = 10, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
-            horizon_step_T : int = 20,
-            number_of_samples_K : int = 100,
+            horizon_step_T : int = 1,
+            number_of_samples_K : int = 10,
             sigma: np.ndarray = np.array([[5, 3], [0.5, 0.5]]),
 
             #지금까지중에는 5, 3, 1, 1이 가장 좋은듯
-            stage_cost_weight: np.ndarray = np.array([100000.0, 100000.0]), # weight for [x, y]
-            terminal_cost_weight: np.ndarray = np.array([100000.0, 100000.0]), # weight for [x, y]
+            stage_cost_weight: np.ndarray = np.array([10000000000.0, 10000000000.0]), # weight for [x, y]
+            terminal_cost_weight: np.ndarray = np.array([10000000000.0, 10000000000.0]), # weight for [x, y]
             param_exploration: float = 0.0,
             param_lambda: float = 50.0,
             param_alpha: float = 1.0,
@@ -221,18 +221,21 @@ class MPPIControllerForRobotArm():
                     # print(f"k = {k}, T = {t},v = {v[k, t-1]}, epsilon = {epsilon[k, t-1]}, u = {u[t-1]}")
                     # add stage cost
                     S[k] += self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]
+                    print(f"k = {k}, t = {t}, x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]}")
                     #S[k] += self._c(position)
 
                 # add terminal cost
                 S[k] += self._phi(position)
+                print(f"terminal, k = {k} x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._phi(position)}")
+                    
                 # print(f"==k = {k}====v==========")
                 # print(v[k])
                 # print("===========s============")
-                print(f"k = {k}, pos = {position}, cost = {S[k]}")
+                print(f"---------k = {k}, pos = {position}, cost = {S[k]}------------")
 
             # compute information theoretic weights for each sample
             w = self._compute_weights(S)
-
+            
             # calculate w_k * epsilon_k
             w_epsilon = np.zeros((self.T, self.dim_u))
             for t in range(self.T): # loop for time step t = 0 ~ T-1
@@ -240,7 +243,8 @@ class MPPIControllerForRobotArm():
                     w_epsilon[t] += w[k] * epsilon[k, t]
 
             # apply moving average filter for smoothing input sequence
-            w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=10)
+            #w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=10)
+            #w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=3)
 
             # update control input sequence
             u += w_epsilon
@@ -270,10 +274,10 @@ class MPPIControllerForRobotArm():
             # calculate sampled trajectories
             sampled_traj_list = np.zeros((self.K, self.T+1, self.dim_x))
             sorted_idx = np.argsort(S) # sort samples by state cost, 0th is the best sample
-
+            print(sorted_idx)
             # #try this u
             # best_v = []
-            sampling_best_traj = np.zeros((self.T, self.dim_x))
+            sampling_best_traj = np.zeros((self.T+1, self.dim_x))
             if self.visualze_sampled_trajs:
                 # for k in sorted_idx:
                 #     # if k == 0:
@@ -300,7 +304,7 @@ class MPPIControllerForRobotArm():
                 #         sampled_traj_list[k, t] = data_rec
                 #         if k == 0:
                 #             sampling_best_traj[t-1] = data_rec
-
+                
                 for k in range(len(sorted_idx)):
                     # if k == 0:
                     #     best_v = v[k]
@@ -309,6 +313,28 @@ class MPPIControllerForRobotArm():
                     q_state = copy.deepcopy(x[2:4])
                     dq_state = copy.deepcopy(x[4:6])
                     sampled_traj_list[sorted_idx[k], 0] = x
+                    #sampling_best_traj[sorted_idx[k], 0] = x
+                    data_rec = [position[0], position[1], q_state[0], q_state[1], dq_state[0], dq_state[1]]
+                    if k == 0:
+                        print(f"s = {S[sorted_idx[k]]}, k == {sorted_idx[k]}, ")
+                        # print(sampling_best_traj)
+                        # print(data_rec)
+                        sampling_best_traj[0] = data_rec
+
+                        for t in range(1, self.T+1):
+
+                            ddq = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
+                            dq_state += dt * ddq
+                            q_state += dt * dq_state
+
+                            x1, y1, x2, y2 = Forward_Kinemetic(q_state)
+                        
+                            position = [x2, y2]
+                            data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
+                            sampling_best_traj[t] = data_rec
+
+                            #x = self._F(x, self._g(v[k, t-1]))
+                            
                     for t in range(1, self.T+1):
                         
 
@@ -324,9 +350,7 @@ class MPPIControllerForRobotArm():
 
                         #x = self._F(x, self._g(v[k, t-1]))
                         sampled_traj_list[sorted_idx[k], t] = data_rec
-                        if sorted_idx[k] == 0:
-                            print(f"s = {S[k]}")
-                            sampling_best_traj[t-1] = data_rec
+                        
 
             # # update privious control input sequence (shift 1 step to the left)
             self.u_prev[:-1] = u[1:]
@@ -357,7 +381,7 @@ class MPPIControllerForRobotArm():
         ref_y = self.ref_path[nearest_idx,1]
         ref_q1 = self.ref_path[nearest_idx,2]
         ref_q2 = self.ref_path[nearest_idx,3]
-
+        print(f"nearest_idx = {nearest_idx}")
         # update nearest waypoint index if necessary
         if update_prev_idx:
             self.prev_waypoints_idx = nearest_idx 

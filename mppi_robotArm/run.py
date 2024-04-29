@@ -38,9 +38,10 @@ y_rec = np.zeros((int(iter)+1, 2))
 q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
-best_rec = np.zeros((21, 2))
-sample_rec = np.zeros((100, 21, 2))
+best_rec = np.zeros((2, 2))
+sample_rec = np.zeros((10, 2, 2))
 ref_rec = ref_path
+#time step t 조정하면 3군데 수정해야됨. bestrec, samplerec, moving avg
 
 
 # initialize a mppi controller for the vehicle
@@ -152,16 +153,17 @@ for k in range(1, int(iter) + 1):
     ax.set_xlabel('X (m)')
     ax.set_ylabel('Y (m)')
     ax.set_title('Robot Movement')
-    Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b', )
+    Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], 'o-b', )
     
     colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
 
     for i in range(len(sample_rec)):
         #sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i], linewidth=0.5)
         sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = 'gray', linewidth=0.5)
-    best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--r',linewidth=4)
-    position_path = ax.plot(x_rec[2:2+k-1,1], y_rec[2:2+k-1, 1], '--g', linewidth=4)
-    sampling_best = ax.plot(sampling_best_traj[:,0], sampling_best_traj[:, 1], color = 'orange', linewidth = 2)
+    best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--r',linewidth=3) #best rec는 optimal traj
+    #print(x_rec[:, 1])
+    position_path = ax.plot(x_rec[1:k+1,1], y_rec[1:k+1, 1], '--g', linewidth=3) #green은 traj 이동 경로
+    sampling_best = ax.plot(sampling_best_traj[:,0], sampling_best_traj[:, 1], color = 'orange', linewidth = 2, linestyle = '--') #sampling_best_traj는 traj 중 최고
     #print(x_rec[2+k-2:2+k-1, 1], y_rec[2+k-2:2+k-1, 1])
     #print(sampling_best_traj)
     #print(best_rec)
