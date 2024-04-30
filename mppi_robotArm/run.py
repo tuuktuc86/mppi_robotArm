@@ -58,7 +58,7 @@ mppi = MPPIControllerForRobotArm(
 #     r, XE, YE = Inverse_Kinemetic(Theta)
 x_rec[0, :] = [0, x[0]]
 y_rec[0, :] = [0, x[1]]
-print(f"k = 0, x = {x[0]}, y = {x[1]}")
+#print(f"k = 0, x = {x[0]}, y = {x[1]}")
 for k in range(1, int(iter) + 1):
 
     t = k * dt
@@ -83,10 +83,10 @@ for k in range(1, int(iter) + 1):
     position = x[0:2]
     q_state = x[2:4]
     dq_state = x[4:6]
-    optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list, sampling_best_traj = mppi.calc_control_input(
+    optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input = mppi.calc_control_input(
         observed_x = x
     )
-
+    print(f"k = {k}, control_input = {sampling_best_input[0]}")
     #to find optimal input
     # optimal_input = origin_path[k, 10:12]
     # q_state = origin_path[k, 4:6]
@@ -94,7 +94,7 @@ for k in range(1, int(iter) + 1):
 
     # v = Controller(x, r, dr, ddr)
     # u = Feedback_linearization(x, v)
-    dq_state += dt * Arm_Dynamic(q_state, dq_state, optimal_input)
+    dq_state += dt * Arm_Dynamic(q_state, dq_state, sampling_best_input[0])
     q_state += dt * dq_state
     #print(f"qstate = {q_state}")
     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
@@ -108,7 +108,7 @@ for k in range(1, int(iter) + 1):
     #set next state
     next_state = np.concatenate((position, q_state, dq_state), axis = 0)
     x = next_state
-    print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {optimal_input}")
+    #print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {optimal_input}")
     
     # if k == 1:
     #     continue
@@ -152,7 +152,7 @@ for k in range(1, int(iter) + 1):
     Joint_3 = [2, 0]
     fig, ax = plt.subplots()
     ax.set_xlim(x[0]-0.002, x[0]+0.002)
-    ax.set_ylim(x[1]-0.002, x[1]+0.002)
+    ax.set_ylim(x[1]-0.005, x[1]+0.002)
     ax.grid(True)
     ax.set_xlabel('X (m)')
     ax.set_ylabel('Y (m)')

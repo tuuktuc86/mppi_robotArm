@@ -108,14 +108,14 @@ class MPPIControllerForRobotArm():
             max_u2 = 10, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 1,
-            number_of_samples_K : int = 10,
+            number_of_samples_K : int = 100,
             #sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]),
             sigma: np.ndarray = np.array([[5, 0.0], [0.0, 0.1]]),
 
             #지금까지중에는 5, 3, 1, 1이 가장 좋은듯
             stage_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
-            param_exploration: float = 0.0,
+            param_exploration: float = 0.3,
             param_lambda: float = 50.0,
             param_alpha: float = 1.0,
             visualize_optimal_traj = True,  # if True, optimal trajectory is visualized
@@ -143,7 +143,7 @@ class MPPIControllerForRobotArm():
         #self.u_prev = np.zeros((self.T, self.dim_u))
 
         #self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
-        self.u_prev = np.array([[12.5, 6.5] for i in range(self.T)])
+        self.u_prev = np.array([[11.5, 6.5] for i in range(self.T)])
         #self.u_prev = np.array([[0.0, 0.0] for i in range(self.T)])
         #중력때문에 시스템이 영향을 받기는 하는 것 같다. 그냥 느낌.
         #u는 진짜 많이 변해야 1정도 변함
@@ -215,10 +215,10 @@ class MPPIControllerForRobotArm():
                     
                     
                     ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
-                    print(f"k = {k} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {self._g(v[k, t-1])}")
+                    #print(f"k = {k} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {self._g(v[k, t-1])}")
                     dq_state += dt * ddq
                     q_state += dt * dq_state
-                    print(f"k = {k}, t = {t}, dq = {dq_state}, q = {q_state}, a = {ddq}")
+                    #print(f"k = {k}, t = {t}, dq = {dq_state}, q = {q_state}, a = {ddq}")
                     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
                     
                     position = [x2, y2]
@@ -236,7 +236,7 @@ class MPPIControllerForRobotArm():
                 # print(f"==k = {k}====v==========")
                 # print(v[k])
                 # print("===========s============")
-                print(f"---------k = {k}, pos = {position}, cost = {S[k]} point = {self.prev_waypoints_idx}------------")
+                #print(f"---------k = {k}, pos = {position}, cost = {S[k]} point = {self.prev_waypoints_idx}------------")
 
             # compute information theoretic weights for each sample
             w = self._compute_weights(S)
@@ -279,7 +279,7 @@ class MPPIControllerForRobotArm():
             # calculate sampled trajectories
             sampled_traj_list = np.zeros((self.K, self.T+1, self.dim_x))
             sorted_idx = np.argsort(S) # sort samples by state cost, 0th is the best sample
-            print(sorted_idx)
+            #print(sorted_idx)
             # #try this u
             # best_v = []
             sampling_best_traj = np.zeros((self.T+1, self.dim_x))
@@ -309,7 +309,7 @@ class MPPIControllerForRobotArm():
                 #         sampled_traj_list[k, t] = data_rec
                 #         if k == 0:
                 #             sampling_best_traj[t-1] = data_rec
-                
+                sampling_best_input = [self.T]
                 for k in range(len(sorted_idx)):
                     # if k == 0:
                     #     best_v = v[k]
@@ -322,7 +322,7 @@ class MPPIControllerForRobotArm():
                     #sampling_best_traj[sorted_idx[k], 0] = x
                     data_rec = [position[0], position[1], q_state[0], q_state[1], dq_state[0], dq_state[1]]
                     if k == 0:
-                        print(f"s = {S[sorted_idx[k]]}, k == {sorted_idx[k]}, ")
+                        #print(f"s = {S[sorted_idx[k]]}, k == {sorted_idx[k]}, ")
                         # print(sampling_best_traj)
                         # print(data_rec)
                         sampling_best_traj[0] = data_rec
@@ -332,7 +332,7 @@ class MPPIControllerForRobotArm():
                             ddq_prime = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
                             dq_state += dt * ddq_prime
                             q_state += dt * dq_state
-
+                            sampling_best_input[t-1] = self._g(v[sorted_idx[k], t-1])
                             x1, y1, x2, y2 = Forward_Kinemetic(q_state)
                         
                             position = [x2, y2]
@@ -349,7 +349,7 @@ class MPPIControllerForRobotArm():
                         
                         
                         ddq = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
-                        print(f"*k = {sorted_idx[k]} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {v[sorted_idx[k], t-1]}")
+                        #print(f"*k = {sorted_idx[k]} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {v[sorted_idx[k], t-1]}")
 
                         dq_state += dt * ddq
                         q_state += dt * dq_state
@@ -358,7 +358,7 @@ class MPPIControllerForRobotArm():
                     
                         position = [x2, y2]
                         data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
-                        print(f"k = {sorted_idx[k]}, t = {t}, data_rec = {data_rec},")
+                        #print(f"k = {sorted_idx[k]}, t = {t}, data_rec = {data_rec},")
                         #x = self._F(x, self._g(v[k, t-1]))
                         sampled_traj_list[sorted_idx[k], t] = data_rec
                         
@@ -366,14 +366,15 @@ class MPPIControllerForRobotArm():
             # # update privious control input sequence (shift 1 step to the left)
             self.u_prev[:-1] = u[1:]
             self.u_prev[-1] = u[-1]
-            #self.u_prev[:-1] = best_v[1:]
-            #self.u_prev[-1] = best_v[-1]
+
+            # self.u_prev[:-1] = sampling_best_input[1:]
+            # self.u_prev[-1] = sampling_best_input[-1]
             # print("==============u=================")
             # print(self.u_prev)
             # raise ValueError
             
             # return optimal control input and input sequence
-            return u[0], u, optimal_traj, sampled_traj_list, sampling_best_traj
+            return u[0], u, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input
             
 
     def _get_nearest_waypoint(self, x: float, y: float, update_prev_idx: bool = False):
@@ -393,7 +394,7 @@ class MPPIControllerForRobotArm():
         ref_x = self.ref_path[nearest_idx,0]
         ref_y = self.ref_path[nearest_idx,1]
         
-        print(f"nearest_idx = {nearest_idx}")
+        #print(f"nearest_idx = {nearest_idx}")
         # update nearest waypoint index if necessary
         if update_prev_idx:
             self.prev_waypoints_idx = nearest_idx 
