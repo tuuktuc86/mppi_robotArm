@@ -11,7 +11,7 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 3
+sim_time = 9.5
 dt = params['Ts']
 iter = sim_time/dt
 
@@ -39,7 +39,7 @@ y_rec = np.zeros((int(iter)+1, 2))
 q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
-best_rec = np.zeros((2, 2))
+best_rec = np.zeros((11, 2))
 sample_rec = np.zeros((9, 2, 2))
 ref_rec = ref_path
 #time step t 조정하면 3군데 수정해야됨. bestrec, samplerec, moving avg
@@ -86,7 +86,7 @@ for k in range(1, int(iter) + 1):
     optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input = mppi.calc_control_input(
         observed_x = x
     )
-    print(f"k = {k}, control_input = {sampling_best_input[0]}")
+    #print(f"k = {k}, control_input = {sampling_best_input[0]}")
     #to find optimal input
     # optimal_input = origin_path[k, 10:12]
     # q_state = origin_path[k, 4:6]
@@ -108,7 +108,7 @@ for k in range(1, int(iter) + 1):
     #set next state
     next_state = np.concatenate((position, q_state, dq_state), axis = 0)
     x = next_state
-    #print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {optimal_input}")
+    print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {sampling_best_input[0]}")
     
     # if k == 1:
     #     continue
@@ -151,8 +151,8 @@ for k in range(1, int(iter) + 1):
     Joint_2 = [1, 0]
     Joint_3 = [2, 0]
     fig, ax = plt.subplots()
-    ax.set_xlim(x[0]-0.002, x[0]+0.002)
-    ax.set_ylim(x[1]-0.005, x[1]+0.002)
+    ax.set_xlim(x[0]-0.004, x[0]+0.004)
+    ax.set_ylim(x[1]-0.006, x[1]+0.003)
     ax.grid(True)
     ax.set_xlabel('X (m)')
     ax.set_ylabel('Y (m)')

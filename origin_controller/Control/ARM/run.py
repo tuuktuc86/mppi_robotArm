@@ -6,12 +6,16 @@ from utils import *
 import pandas as pd
 
 params = SYS_PARAMS()
-sim_time = 0.0005
+sim_time = 2
 dt = params['Ts']
 iter = sim_time/dt
 
-q = np.array([1.15330155205678, -1.25860399690807])
+q = np.array([1.15330155041141, -1.25860400808722])
 dq = np.array([0.0, 0.0])
+
+#그림그리기 위한 용도
+ref_path = np.genfromtxt('reference_forest.csv', delimiter=',', skip_header=1)
+
 
 trajName = 'circle'
 isDesturbance = 0
@@ -87,32 +91,34 @@ Robot_arm_2, = ax.plot([Joint_2[0], Joint_3[0]], [
                        Joint_2[1], Joint_3[1]], 'k', linewidth=4)
 Robot_path, = ax.plot([Joint_3[0]-0.01, Joint_3[0]],
                       [Joint_3[1]-0.01, Joint_3[1]], 'r.', linewidth=0.5)
-Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
+#그림그리기 위한 용도
+Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], '--b')
+#Target_path, = ax.plot(rx_rec[3:, 0], ry_rec[3:, 0], '--b')
 
 path_x, path_y = [], []
 
-# # save reference trajectory
-a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
-a2 = np.array(ry_rec[3:, 0]).reshape(-1, 1)
-a3 = np.array(rq_rec[3:, 0]).reshape(-1, 1)
-a4 = np.array(rq_rec[3:, 1]).reshape(-1, 1)
-a5 = np.array(q_rec[3:, 0]).reshape(-1, 1)
-a6 = np.array(q_rec[3:, 1]).reshape(-1, 1)
-a7 = np.array(dq_rec[3:, 0]).reshape(-1, 1)
-a8 = np.array(dq_rec[3:, 1]).reshape(-1, 1)
-a9 = np.array(ddq_rec[3:, 0]).reshape(-1, 1)
-a10 = np.array(ddq_rec[3:, 1]).reshape(-1, 1)
-a11 = np.array(u_rec[3:, 0]).reshape(-1, 1)
-a12 = np.array(u_rec[3:, 1]).reshape(-1, 1)
-# # print(a1.shape)
-# # print(a2.shape)
-# # print(a3.shape)
-# # print(a4.shape)
-b = np.concatenate((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), axis = 1)
-# a7 = np.concatenate((a6, a4), axis = 1) #1998, 1 and x, y, q1, q2의 추종값
-print(b.shape)
-df = pd.DataFrame(b)
-df.to_csv(f'origin_reference_{sim_time}_{dt}.csv')
+# # # save reference trajectory
+# a1 = np.array(rx_rec[3:, 0]).reshape(-1, 1)
+# a2 = np.array(ry_rec[3:, 0]).reshape(-1, 1)
+# a3 = np.array(rq_rec[3:, 0]).reshape(-1, 1)
+# a4 = np.array(rq_rec[3:, 1]).reshape(-1, 1)
+# a5 = np.array(q_rec[3:, 0]).reshape(-1, 1)
+# a6 = np.array(q_rec[3:, 1]).reshape(-1, 1)
+# a7 = np.array(dq_rec[3:, 0]).reshape(-1, 1)
+# a8 = np.array(dq_rec[3:, 1]).reshape(-1, 1)
+# a9 = np.array(ddq_rec[3:, 0]).reshape(-1, 1)
+# a10 = np.array(ddq_rec[3:, 1]).reshape(-1, 1)
+# a11 = np.array(u_rec[3:, 0]).reshape(-1, 1)
+# a12 = np.array(u_rec[3:, 1]).reshape(-1, 1)
+# # # print(a1.shape)
+# # # print(a2.shape)
+# # # print(a3.shape)
+# # # print(a4.shape)
+# b = np.concatenate((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), axis = 1)
+# # a7 = np.concatenate((a6, a4), axis = 1) #1998, 1 and x, y, q1, q2의 추종값
+# print(b.shape)
+# df = pd.DataFrame(b)
+# df.to_csv(f'origin_reference_{sim_time}_{dt}.csv')
 #중간에 1.4,0.8, 2.0.0 여러개 있어서 하나씩만 빼고 다 지움
 # index가 안들어 있어서 x, y 따로 설정해서 저장하긴 함. 근데 없어도 무방. 그리고 columns 번호 삭제 해야됨
 
@@ -134,7 +140,7 @@ def update(frame):
 
 
 ani = animation.FuncAnimation(fig, update, frames=range(
-    0, int(iter)+1, 10), blit=True, interval=20, repeat=False)
+    0, int(iter)+1, 10), blit=True, interval=20, repeat=True)
 plt.show()
 
 # ############################

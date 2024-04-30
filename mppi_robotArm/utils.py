@@ -104,10 +104,10 @@ def Controller(x, r, dr, ddr):
 class MPPIControllerForRobotArm():
     def __init__(
             self,
-            max_u1 = 20, #값 보고 임의로 설정
-            max_u2 = 10, #값 보고 임의로 설정
+            max_u1 = 15, #값 보고 임의로 설정
+            max_u2 = 8, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
-            horizon_step_T : int = 1,
+            horizon_step_T : int = 10,
             number_of_samples_K : int = 100,
             #sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]),
             sigma: np.ndarray = np.array([[5, 0.0], [0.0, 0.1]]),
@@ -115,7 +115,7 @@ class MPPIControllerForRobotArm():
             #지금까지중에는 5, 3, 1, 1이 가장 좋은듯
             stage_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
             terminal_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
-            param_exploration: float = 0.3,
+            param_exploration: float = 0.0,
             param_lambda: float = 50.0,
             param_alpha: float = 1.0,
             visualize_optimal_traj = True,  # if True, optimal trajectory is visualized
@@ -142,8 +142,8 @@ class MPPIControllerForRobotArm():
         # mppi variables
         #self.u_prev = np.zeros((self.T, self.dim_u))
 
-        #self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
-        self.u_prev = np.array([[11.5, 6.5] for i in range(self.T)])
+        self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
+        #self.u_prev = np.array([[11.5, 6.5] for i in range(self.T)])
         #self.u_prev = np.array([[0.0, 0.0] for i in range(self.T)])
         #중력때문에 시스템이 영향을 받기는 하는 것 같다. 그냥 느낌.
         #u는 진짜 많이 변해야 1정도 변함
@@ -309,7 +309,7 @@ class MPPIControllerForRobotArm():
                 #         sampled_traj_list[k, t] = data_rec
                 #         if k == 0:
                 #             sampling_best_traj[t-1] = data_rec
-                sampling_best_input = [self.T]
+                sampling_best_input = np.zeros((self.T, 2))
                 for k in range(len(sorted_idx)):
                     # if k == 0:
                     #     best_v = v[k]
@@ -332,6 +332,7 @@ class MPPIControllerForRobotArm():
                             ddq_prime = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
                             dq_state += dt * ddq_prime
                             q_state += dt * dq_state
+                            #print(f"t = {t}, input = {sampling_best_input[t-1]}")
                             sampling_best_input[t-1] = self._g(v[sorted_idx[k], t-1])
                             x1, y1, x2, y2 = Forward_Kinemetic(q_state)
                         
