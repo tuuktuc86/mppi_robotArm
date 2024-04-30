@@ -18,11 +18,12 @@ iter = sim_time/dt
 
 #x = np.array([1.03960371764376, 1.35008186526306, 1.46563474895373, -1.10207211330654,0, 0]) # x, y, q1, q2, dq1, dq2  #231번점
 #원래 값은 ddq가 0,0
-x = np.array([1.39993250126562, 0.808999662503797, 1.15330155205678, -1.25860399690807,-0.000466398432713, -0.003120159413556]) # x, y, q1, q2, dq1, dq2
+x = np.array([1.3999325014217017, 0.8089996490831619, 1.15330155041141, -1.25860400808722, 0.015, 0.015]) # x, y, q1, q2, dq1, dq2
+#x = np.array([1.3999325014217017, 0.8089996490831619, 1.15330155041141, -1.25860400808722,-0.109067881729775, -0.740928212925687]) # x, y, q1, q2, dq1, dq2
 
 trajName = 'circle'
 isDesturbance = 0
-ref_path = np.genfromtxt('reference.csv', delimiter=',', skip_header=1)
+ref_path = np.genfromtxt('reference_forest.csv', delimiter=',', skip_header=1)
 #ref_path = np.genfromtxt('reference3_0.01.csv', delimiter=',', skip_header=1)
 #print(ref_path.shape) #1214, 4 [x, y, q1, q2]
 
@@ -39,7 +40,7 @@ q_rec = np.zeros((int(iter)+1, 2))
 u_rec = np.zeros((int(iter)+1, 2))
 t_rec = np.zeros(int(iter)+1)
 best_rec = np.zeros((2, 2))
-sample_rec = np.zeros((10, 2, 2))
+sample_rec = np.zeros((9, 2, 2))
 ref_rec = ref_path
 #time step t 조정하면 3군데 수정해야됨. bestrec, samplerec, moving avg
 
@@ -55,7 +56,9 @@ mppi = MPPIControllerForRobotArm(
 
 #     Theta = t
 #     r, XE, YE = Inverse_Kinemetic(Theta)
-
+x_rec[0, :] = [0, x[0]]
+y_rec[0, :] = [0, x[1]]
+print(f"k = 0, x = {x[0]}, y = {x[1]}")
 for k in range(1, int(iter) + 1):
 
     t = k * dt
@@ -76,6 +79,7 @@ for k in range(1, int(iter) + 1):
     # else:
     #     dr = np.array([0, 0])
     #     ddr = np.array([0, 0])
+   
     position = x[0:2]
     q_state = x[2:4]
     dq_state = x[4:6]
@@ -125,11 +129,11 @@ for k in range(1, int(iter) + 1):
         best_rec[i][0] = optimal_traj[i][0]
         best_rec[i][1] = optimal_traj[i][1]
 
-    for i in range(len(sampled_traj_list)):
-        for j in range(len(sampled_traj_list[0])):
-
-            sample_rec[i][j][0] = sampled_traj_list[i][j][0]
-            sample_rec[i][j][1] = sampled_traj_list[i][j][1]
+    # for i in range(len(sampled_traj_list)):
+    #     for j in range(len(sampled_traj_list[0])):
+            
+    #         sample_rec[i][j][0] = sampled_traj_list[i][j][0]
+    #         sample_rec[i][j][1] = sampled_traj_list[i][j][1]
 
 
     # # optimal, sample trajectory 확인
@@ -153,16 +157,16 @@ for k in range(1, int(iter) + 1):
     ax.set_xlabel('X (m)')
     ax.set_ylabel('Y (m)')
     ax.set_title('Robot Movement')
-    Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], 'o-b', )
+    Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], 'o-b', linewidth=0.5)
     
     colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
 
-    for i in range(len(sample_rec)):
+    for i in range(len(sampled_traj_list)):
         #sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i], linewidth=0.5)
-        sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = 'gray', linewidth=0.5)
+        sample_path, = ax.plot(sampled_traj_list[i,:,0], sampled_traj_list[i,:,1], color = 'gray', linewidth=0.5)
     best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--r',linewidth=3) #best rec는 optimal traj
     #print(x_rec[:, 1])
-    position_path = ax.plot(x_rec[1:k+1,1], y_rec[1:k+1, 1], '--g', linewidth=3) #green은 traj 이동 경로
+    position_path = ax.plot(x_rec[0:k,1], y_rec[0:k, 1], '--g', linewidth=3) #green은 traj 이동 경로
     sampling_best = ax.plot(sampling_best_traj[:,0], sampling_best_traj[:, 1], color = 'orange', linewidth = 2, linestyle = '--') #sampling_best_traj는 traj 중 최고
     #print(x_rec[2+k-2:2+k-1, 1], y_rec[2+k-2:2+k-1, 1])
     #print(sampling_best_traj)

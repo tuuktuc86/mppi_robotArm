@@ -6,7 +6,7 @@ from utils import *
 import pandas as pd
 
 params = SYS_PARAMS()
-sim_time = 10
+sim_time = 0.0005
 dt = params['Ts']
 iter = sim_time/dt
 

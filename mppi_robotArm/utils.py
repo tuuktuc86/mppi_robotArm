@@ -109,11 +109,12 @@ class MPPIControllerForRobotArm():
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
             horizon_step_T : int = 1,
             number_of_samples_K : int = 10,
-            sigma: np.ndarray = np.array([[5, 3], [0.5, 0.5]]),
+            #sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]),
+            sigma: np.ndarray = np.array([[5, 0.0], [0.0, 0.1]]),
 
             #지금까지중에는 5, 3, 1, 1이 가장 좋은듯
-            stage_cost_weight: np.ndarray = np.array([10000000000.0, 10000000000.0]), # weight for [x, y]
-            terminal_cost_weight: np.ndarray = np.array([10000000000.0, 10000000000.0]), # weight for [x, y]
+            stage_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
+            terminal_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
             param_exploration: float = 0.0,
             param_lambda: float = 50.0,
             param_alpha: float = 1.0,
@@ -141,7 +142,9 @@ class MPPIControllerForRobotArm():
         # mppi variables
         #self.u_prev = np.zeros((self.T, self.dim_u))
 
-        self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
+        #self.u_prev = np.array([[11.0, 5.0] for i in range(self.T)])
+        self.u_prev = np.array([[12.5, 6.5] for i in range(self.T)])
+        #self.u_prev = np.array([[0.0, 0.0] for i in range(self.T)])
         #중력때문에 시스템이 영향을 받기는 하는 것 같다. 그냥 느낌.
         #u는 진짜 많이 변해야 1정도 변함
         #원본 trajectory
@@ -149,7 +152,7 @@ class MPPIControllerForRobotArm():
         self.max_u1 = max_u1 # [rad]
         self.max_u2 = max_u2 # [m/s^2]
         # ref_path info
-        self.prev_waypoints_idx = 0
+        self.prev_waypoints_idx = 295
     
 
 
@@ -197,6 +200,7 @@ class MPPIControllerForRobotArm():
                 # loop for time step t = 1 ~ T
                 # print(f"k = {k}, T = {0},ddq = {'-'}, dqstate = {dq_state}, q_state = {q_state}, state = {position}")
                 # print(f"*** x = {x}")
+
                 for t in range(1, self.T+1):
 
                     # get control input with noise
@@ -211,9 +215,10 @@ class MPPIControllerForRobotArm():
                     
                     
                     ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
+                    print(f"k = {k} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {self._g(v[k, t-1])}")
                     dq_state += dt * ddq
                     q_state += dt * dq_state
-                    
+                    print(f"k = {k}, t = {t}, dq = {dq_state}, q = {q_state}, a = {ddq}")
                     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
                     
                     position = [x2, y2]
@@ -221,17 +226,17 @@ class MPPIControllerForRobotArm():
                     # print(f"k = {k}, T = {t},v = {v[k, t-1]}, epsilon = {epsilon[k, t-1]}, u = {u[t-1]}")
                     # add stage cost
                     S[k] += self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]
-                    print(f"k = {k}, t = {t}, x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]}")
+                    #print(f"k = {k}, t = {t}, x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]}")
                     #S[k] += self._c(position)
 
                 # add terminal cost
                 S[k] += self._phi(position)
-                print(f"terminal, k = {k} x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._phi(position)}")
+                #print(f"terminal, k = {k} x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._phi(position)}")
                     
                 # print(f"==k = {k}====v==========")
                 # print(v[k])
                 # print("===========s============")
-                print(f"---------k = {k}, pos = {position}, cost = {S[k]}------------")
+                print(f"---------k = {k}, pos = {position}, cost = {S[k]} point = {self.prev_waypoints_idx}------------")
 
             # compute information theoretic weights for each sample
             w = self._compute_weights(S)
@@ -247,7 +252,7 @@ class MPPIControllerForRobotArm():
             #w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=3)
 
             # update control input sequence
-            u += w_epsilon
+            #u += 70
             #u에 w_epsilon 더해서 optimal input 생성. 그러나 optimal traj는 v를 이용하기 때문에 같다고는 볼 수 없을 것 같음
 
             # calculate optimal trajectory
@@ -312,6 +317,7 @@ class MPPIControllerForRobotArm():
                     position = copy.deepcopy(x[0:2])
                     q_state = copy.deepcopy(x[2:4])
                     dq_state = copy.deepcopy(x[4:6])
+                    #print(f"qstate** = {dq_state}")
                     sampled_traj_list[sorted_idx[k], 0] = x
                     #sampling_best_traj[sorted_idx[k], 0] = x
                     data_rec = [position[0], position[1], q_state[0], q_state[1], dq_state[0], dq_state[1]]
@@ -323,8 +329,8 @@ class MPPIControllerForRobotArm():
 
                         for t in range(1, self.T+1):
 
-                            ddq = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
-                            dq_state += dt * ddq
+                            ddq_prime = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
+                            dq_state += dt * ddq_prime
                             q_state += dt * dq_state
 
                             x1, y1, x2, y2 = Forward_Kinemetic(q_state)
@@ -334,12 +340,17 @@ class MPPIControllerForRobotArm():
                             sampling_best_traj[t] = data_rec
 
                             #x = self._F(x, self._g(v[k, t-1]))
-                            
+                        
+                    x = x0
+                    position = copy.deepcopy(x[0:2])
+                    q_state = copy.deepcopy(x[2:4])
+                    dq_state = copy.deepcopy(x[4:6])
                     for t in range(1, self.T+1):
                         
-
-
+                        
                         ddq = Arm_Dynamic(q_state, dq_state, self._g(v[sorted_idx[k], t-1]))
+                        print(f"*k = {sorted_idx[k]} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {v[sorted_idx[k], t-1]}")
+
                         dq_state += dt * ddq
                         q_state += dt * dq_state
 
@@ -347,7 +358,7 @@ class MPPIControllerForRobotArm():
                     
                         position = [x2, y2]
                         data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
-
+                        print(f"k = {sorted_idx[k]}, t = {t}, data_rec = {data_rec},")
                         #x = self._F(x, self._g(v[k, t-1]))
                         sampled_traj_list[sorted_idx[k], t] = data_rec
                         
@@ -368,10 +379,12 @@ class MPPIControllerForRobotArm():
     def _get_nearest_waypoint(self, x: float, y: float, update_prev_idx: bool = False):
         """search the closest waypoint to the vehicle on the reference path"""
 
-        SEARCH_IDX_LEN = 100 # [points] forward search range
+        SEARCH_IDX_LEN = 200 # [points] forward search range
         prev_idx = self.prev_waypoints_idx
         dx = [(x - ref_x)*10 for ref_x in self.ref_path[prev_idx:(prev_idx + SEARCH_IDX_LEN), 0]]
         dy = [(y - ref_y)*10 for ref_y in self.ref_path[prev_idx:(prev_idx + SEARCH_IDX_LEN), 1]]
+        # dx = [(x - ref_x)*10 for ref_x in self.ref_path[prev_idx+1:(prev_idx + SEARCH_IDX_LEN), 0]]
+        # dy = [(y - ref_y)*10 for ref_y in self.ref_path[prev_idx+1:(prev_idx + SEARCH_IDX_LEN), 1]]
         d = [idx ** 2 + idy ** 2 for (idx, idy) in zip(dx, dy)]
         min_d = min(d)
         nearest_idx = d.index(min_d) + prev_idx
@@ -379,15 +392,13 @@ class MPPIControllerForRobotArm():
         # get reference values of the nearest waypoint
         ref_x = self.ref_path[nearest_idx,0]
         ref_y = self.ref_path[nearest_idx,1]
-        ref_q1 = self.ref_path[nearest_idx,2]
-        ref_q2 = self.ref_path[nearest_idx,3]
+        
         print(f"nearest_idx = {nearest_idx}")
         # update nearest waypoint index if necessary
         if update_prev_idx:
             self.prev_waypoints_idx = nearest_idx 
         #print(f"x = {x} y = {y}, nearest = {nearest_idx}")
-        return nearest_idx, ref_x, ref_y, ref_q1, ref_q2
-    
+        return nearest_idx, ref_x, ref_y
     def _calc_epsilon(self, sigma: np.ndarray, size_sample: int, size_time_step: int, size_dim_u: int) -> np.ndarray:
         """sample epsilon"""
         # check if sigma row size == sigma col size == size_dim_u and size_dim_u > 0
@@ -421,7 +432,7 @@ class MPPIControllerForRobotArm():
       
         
         # calculate stage cost
-        _, ref_x, ref_y, ref_yaw, ref_v = self._get_nearest_waypoint(x, y)
+        _, ref_x, ref_y = self._get_nearest_waypoint(x, y)
         stage_cost = self.stage_cost_weight[0]*(x-ref_x)**2 + self.stage_cost_weight[1]*(y-ref_y)**2
                      
         return stage_cost
@@ -433,7 +444,7 @@ class MPPIControllerForRobotArm():
        
 
         # calculate terminal cost
-        _, ref_x, ref_y, ref_yaw, ref_v = self._get_nearest_waypoint(x, y)
+        _, ref_x, ref_y = self._get_nearest_waypoint(x, y)
         terminal_cost = self.terminal_cost_weight[0]*(x-ref_x)**2 + self.terminal_cost_weight[1]*(y-ref_y)**2
         return terminal_cost
     
