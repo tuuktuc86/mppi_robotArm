@@ -81,6 +81,9 @@ def Feedback_linearization(q, dq, v):
 
     u = np.dot(M, v) + np.dot(C, dq) + G
 
+    
+
+
     return u
 
 

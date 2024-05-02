@@ -11,7 +11,7 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 9.5
+sim_time = 12
 dt = params['Ts']
 iter = sim_time/dt
 
@@ -83,7 +83,7 @@ for k in range(1, int(iter) + 1):
     position = x[0:2]
     q_state = x[2:4]
     dq_state = x[4:6]
-    optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input = mppi.calc_control_input(
+    optimal_input, optimal_input_sequence, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input, flag = mppi.calc_control_input(
         observed_x = x
     )
     #print(f"k = {k}, control_input = {sampling_best_input[0]}")
@@ -98,6 +98,7 @@ for k in range(1, int(iter) + 1):
     q_state += dt * dq_state
     #print(f"qstate = {q_state}")
     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
+    distance = ((position[0]-x2)**2 + (position[1] - y2)**2)**0.5
     position[0] = x2
     position[1] = y2
     # x[2] = q_state[0]
@@ -108,7 +109,7 @@ for k in range(1, int(iter) + 1):
     #set next state
     next_state = np.concatenate((position, q_state, dq_state), axis = 0)
     x = next_state
-    print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {sampling_best_input[0]}")
+    print(f"k = {k}, x2 = {x[0]:.10f}, y2 = {x[1]:.10f}, qstate = {x[2:4]}, dq_state = {x[4:6]} optINPUT = {sampling_best_input[0]}, dis = {distance}")
     
     # if k == 1:
     #     continue
@@ -125,9 +126,9 @@ for k in range(1, int(iter) + 1):
     # check 1 sample traj
          
     # trajectory 기록
-    for i in range(len(optimal_traj)):
-        best_rec[i][0] = optimal_traj[i][0]
-        best_rec[i][1] = optimal_traj[i][1]
+    # for i in range(len(optimal_traj)):
+    #     best_rec[i][0] = optimal_traj[i][0]
+    #     best_rec[i][1] = optimal_traj[i][1]
 
     # for i in range(len(sampled_traj_list)):
     #     for j in range(len(sampled_traj_list[0])):
@@ -146,32 +147,32 @@ for k in range(1, int(iter) + 1):
             
     #         print(f"i = {i} | j = {j} //{sample_rec[i][j][0]}, {sample_rec[i][j][1]}")
 
-    #여기부터 수정
-    Joint_1 = [0, 0]
-    Joint_2 = [1, 0]
-    Joint_3 = [2, 0]
-    fig, ax = plt.subplots()
-    ax.set_xlim(x[0]-0.004, x[0]+0.004)
-    ax.set_ylim(x[1]-0.006, x[1]+0.003)
-    ax.grid(True)
-    ax.set_xlabel('X (m)')
-    ax.set_ylabel('Y (m)')
-    ax.set_title('Robot Movement')
-    Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], 'o-b', linewidth=0.5)
+    # #여기부터 수정
+    # Joint_1 = [0, 0]
+    # Joint_2 = [1, 0]
+    # Joint_3 = [2, 0]
+    # fig, ax = plt.subplots()
+    # ax.set_xlim(x[0]-0.0005, x[0]+0.0005)
+    # ax.set_ylim(x[1]-0.0005, x[1]+0.0005)
+    # ax.grid(True)
+    # ax.set_xlabel('X (m)')
+    # ax.set_ylabel('Y (m)')
+    # ax.set_title('Robot Movement')
+    # Target_path, = ax.plot(ref_path[:, 0], ref_path[:, 1], 'o-b', linewidth=0.5)
     
-    colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
+    # colors = plt.cm.jet(np.linspace(0, 1, len(sample_rec))) #다른 색 사용하려고 구분
 
-    for i in range(len(sampled_traj_list)):
-        #sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i], linewidth=0.5)
-        sample_path, = ax.plot(sampled_traj_list[i,:,0], sampled_traj_list[i,:,1], color = 'gray', linewidth=0.5)
-    best_path, = ax.plot(best_rec[:,0], best_rec[:,1], '--r',linewidth=3) #best rec는 optimal traj
-    #print(x_rec[:, 1])
-    position_path = ax.plot(x_rec[0:k,1], y_rec[0:k, 1], '--g', linewidth=3) #green은 traj 이동 경로
-    sampling_best = ax.plot(sampling_best_traj[:,0], sampling_best_traj[:, 1], color = 'orange', linewidth = 2, linestyle = '--') #sampling_best_traj는 traj 중 최고
-    #print(x_rec[2+k-2:2+k-1, 1], y_rec[2+k-2:2+k-1, 1])
-    #print(sampling_best_traj)
-    #print(best_rec)
-    plt.show()
+    # for i in range(len(sampled_traj_list)):
+    #     #sample_path, = ax.plot(sample_rec[i,:,0], sample_rec[i,:,1], color = colors[i], linewidth=0.5)
+    #     sample_path, = ax.plot(sampled_traj_list[i,:,0], sampled_traj_list[i,:,1], color = 'gray', linewidth=0.5)
+    # best_path, = ax.plot(optimal_traj[:,0], optimal_traj[:,1], '--r',linewidth=3) #best rec는 optimal traj
+    # #print(x_rec[:, 1])
+    # position_path = ax.plot(x_rec[0:k,1], y_rec[0:k, 1], '--g', linewidth=3) #green은 traj 이동 경로
+    # sampling_best = ax.plot(sampling_best_traj[:,0], sampling_best_traj[:, 1], color = 'orange', linewidth = 2, linestyle = '--') #sampling_best_traj는 traj 중 최고
+    # #print(x_rec[2+k-2:2+k-1, 1], y_rec[2+k-2:2+k-1, 1])
+    # #print(sampling_best_traj)
+    # #print(best_rec)
+    # plt.show()
 
 
 

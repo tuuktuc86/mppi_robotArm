@@ -107,10 +107,11 @@ class MPPIControllerForRobotArm():
             max_u1 = 15, #값 보고 임의로 설정
             max_u2 = 8, #값 보고 임의로 설정
             ref_path: np.ndarray = np.array([[0.0, 0.0, 0.0, 1.0], [10.0, 0.0, 0.0, 1.0]]),
-            horizon_step_T : int = 10,
+            horizon_step_T : int = 1,
             number_of_samples_K : int = 100,
             #sigma: np.ndarray = np.array([[0.5, 0.0], [0.0, 0.1]]),
-            sigma: np.ndarray = np.array([[5, 0.0], [0.0, 0.1]]),
+            #sigma: np.ndarray = np.array([[5, 0.0], [0.0, 0.1]]),
+            sigma: np.ndarray = np.array([[20, 0.0], [0.0, 20]]),
 
             #지금까지중에는 5, 3, 1, 1이 가장 좋은듯
             stage_cost_weight: np.ndarray = np.array([10000000.0, 10000000.0]), # weight for [x, y]
@@ -207,6 +208,8 @@ class MPPIControllerForRobotArm():
                     if k < (1.0-self.param_exploration)*self.K:
                         v[k, t-1] = u[t-1] + epsilon[k, t-1] # sampling for exploitation
                     else:
+                        # epsilon[k, t-1, 0] = np.random.normal(0, 4, 1)
+                        # epsilon[k, t-1, 1] = np.random.normal(0, 0.7, 1)
                         v[k, t-1] = epsilon[k, t-1] # sampling for exploration
 
                     # update x
@@ -217,20 +220,23 @@ class MPPIControllerForRobotArm():
                     ddq = Arm_Dynamic(q_state, dq_state, self._g(v[k, t-1]))
                     #print(f"k = {k} t = {t} ddq = {ddq}, qstate ={q_state}, dq_state = {dq_state}, input = {self._g(v[k, t-1])}")
                     dq_state += dt * ddq
+                    dq_state = max()
                     q_state += dt * dq_state
                     #print(f"k = {k}, t = {t}, dq = {dq_state}, q = {q_state}, a = {ddq}")
                     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
-                    
+                    #print(dt)
                     position = [x2, y2]
                     # print(f"k = {k}, T = {t},ddq = {ddq}, dqstate = {dq_state}, q_state = {q_state}, state = {position}")
                     # print(f"k = {k}, T = {t},v = {v[k, t-1]}, epsilon = {epsilon[k, t-1]}, u = {u[t-1]}")
                     # add stage cost
-                    S[k] += self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]
+                    #S[k] += self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]
+                    S[k] += self._c(position)
                     #print(f"k = {k}, t = {t}, x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._c(position) + self.param_gamma * u[t-1].T @ np.linalg.inv(self.Sigma) @ v[k, t-1]}")
                     #S[k] += self._c(position)
 
                 # add terminal cost
                 S[k] += self._phi(position)
+
                 #print(f"terminal, k = {k} x = {position[0]}, y = {position[1]} s[{k}] = {S[k]}, adding = {self._phi(position)}")
                     
                 # print(f"==k = {k}====v==========")
@@ -249,11 +255,13 @@ class MPPIControllerForRobotArm():
 
             # apply moving average filter for smoothing input sequence
             #w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=10)
-            #w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=3)
+            #w_epsilon = self._moving_average_filter(xx=w_epsilon, window_size=5)
 
             # update control input sequence
             #u += 70
             #u에 w_epsilon 더해서 optimal input 생성. 그러나 optimal traj는 v를 이용하기 때문에 같다고는 볼 수 없을 것 같음
+            
+            opt_cost = 0
 
             # calculate optimal trajectory
             optimal_traj = np.zeros((self.T+1, self.dim_x))
@@ -271,11 +279,13 @@ class MPPIControllerForRobotArm():
 
                     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
                 
-                    position_opt = [x2, y2]
+                    position = [x2, y2]
                     data_rec = [x2, y2, q_state[0], q_state[1], dq_state[0], dq_state[1]]
                     optimal_traj[t] = data_rec
-                    #이거 가중치 계산한 샘플링이 아니라 지금 거 중에 가장 좋은거 경로 찍는거임 그래서 샘플 경로 하나랑 똑같음
 
+                    opt_cost += self._c(position)
+                    #이거 가중치 계산한 샘플링이 아니라 지금 거 중에 가장 좋은거 경로 찍는거임 그래서 샘플 경로 하나랑 똑같음
+                opt_cost += self._phi(position)    
             # calculate sampled trajectories
             sampled_traj_list = np.zeros((self.K, self.T+1, self.dim_x))
             sorted_idx = np.argsort(S) # sort samples by state cost, 0th is the best sample
@@ -362,7 +372,15 @@ class MPPIControllerForRobotArm():
                         #print(f"k = {sorted_idx[k]}, t = {t}, data_rec = {data_rec},")
                         #x = self._F(x, self._g(v[k, t-1]))
                         sampled_traj_list[sorted_idx[k], t] = data_rec
-                        
+            
+            flag = 0
+            #opt_traj 보다 sampling best traj가 더 좋으면 sampling best traj로 교체
+            # if opt_cost > S[sorted_idx[0]]:
+                
+            #     flag = 1
+            #     self.u_prev[:-1] = u[1:]
+            #     self.u_prev[-1] = sampling_best_input[-1]
+            #     return sampling_best_input[0], u, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input, flag
 
             # # update privious control input sequence (shift 1 step to the left)
             self.u_prev[:-1] = u[1:]
@@ -375,13 +393,15 @@ class MPPIControllerForRobotArm():
             # raise ValueError
             
             # return optimal control input and input sequence
-            return u[0], u, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input
+
+
+            return u[0], u, optimal_traj, sampled_traj_list, sampling_best_traj, sampling_best_input, flag
             
 
     def _get_nearest_waypoint(self, x: float, y: float, update_prev_idx: bool = False):
         """search the closest waypoint to the vehicle on the reference path"""
 
-        SEARCH_IDX_LEN = 200 # [points] forward search range
+        SEARCH_IDX_LEN = 500 # [points] forward search range
         prev_idx = self.prev_waypoints_idx
         dx = [(x - ref_x)*10 for ref_x in self.ref_path[prev_idx:(prev_idx + SEARCH_IDX_LEN), 0]]
         dy = [(y - ref_y)*10 for ref_y in self.ref_path[prev_idx:(prev_idx + SEARCH_IDX_LEN), 1]]
@@ -411,7 +431,8 @@ class MPPIControllerForRobotArm():
             raise ValueError
 
         # sample epsilon
-        mu = np.zeros((size_dim_u)) # set average as a zero vector
+        #mu = np.zeros((size_dim_u)) # set average as a zero vector
+        mu = np.array([-1, -0.3])
         #mu = np.full((size_dim_u),100) 
 
         #어쩌면 mu가 답일까?

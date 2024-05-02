@@ -1,17 +1,33 @@
 import numpy as np
-l1 = 1
-l2 = 1
-def Forward_Kinemetic(q):
-    # print(f"q = {q}")
-    if np.isnan(q[0]):
-        print("nan")
-        raise IndexError
-    x1 = l1 * np.cos(q[0])
-    y1 = l1 * np.sin(q[0])
-    x2 = l1 * np.cos(q[0]) + l2 * np.cos(q[0] + q[1])
-    y2 = l1 * np.sin(q[0]) + l2 * np.sin(q[0] + q[1])
 
-    return x1, y1, x2, y2
+sigma: np.ndarray = np.array([[20, 0.0], [0.0, 1]])
+size_dim_u = 2
+mu = np.zeros((size_dim_u))
+#mu = np.array([5, 5])
+#print(mu)
 
-_, _, x, y = Forward_Kinemetic([1.15330155041141, -1.25860400808722])
-print(x, y)
+size_sample = 10000
+size_time_step = 20
+epsilon = np.random.multivariate_normal(mu, sigma, (size_sample, size_time_step))
+
+#print(epsilon)
+print(epsilon.shape)
+
+print(f"1 mean = {np.mean(epsilon[:,0])}")
+print(f"1 std = {np.std(epsilon[:,0])}")
+
+print(f"1 max = {np.max(epsilon[:,0])}")
+print(f"1 min = {np.min(epsilon[:,0])}")
+print()
+print(f"2 mean = {np.mean(epsilon[:,1])}")
+print(f"2 std = {np.std(epsilon[:,1])}")
+print(f"2 max = {np.max(epsilon[:,1])}")
+print(f"2 min = {np.min(epsilon[:,1])}")
+
+sample = np.random.normal(5, 0.7, 100)
+print(np.min(sample))
+print(np.max(sample))
+
+
+
+
