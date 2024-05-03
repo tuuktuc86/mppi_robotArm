@@ -11,7 +11,7 @@ import pandas as pd
 params = SYS_PARAMS()
 
 #set simulation time
-sim_time = 12
+sim_time = 20
 dt = params['Ts']
 iter = sim_time/dt
 
@@ -94,7 +94,9 @@ for k in range(1, int(iter) + 1):
 
     # v = Controller(x, r, dr, ddr)
     # u = Feedback_linearization(x, v)
-    dq_state += dt * Arm_Dynamic(q_state, dq_state, sampling_best_input[0])
+    dq_state += dt * Arm_Dynamic(q_state, dq_state, optimal_input)
+    dq_state[0] = np.clip(dq_state[0], -0.9, 0.9)
+    dq_state[1] = np.clip(dq_state[1], -0.5, 0.5)
     q_state += dt * dq_state
     #print(f"qstate = {q_state}")
     x1, y1, x2, y2 = Forward_Kinemetic(q_state)
@@ -152,8 +154,8 @@ for k in range(1, int(iter) + 1):
     # Joint_2 = [1, 0]
     # Joint_3 = [2, 0]
     # fig, ax = plt.subplots()
-    # ax.set_xlim(x[0]-0.0005, x[0]+0.0005)
-    # ax.set_ylim(x[1]-0.0005, x[1]+0.0005)
+    # ax.set_xlim(x[0]- 2*distance, x[0]+2*distance)
+    # ax.set_ylim(x[1]-2*distance, x[1]+2*distance)
     # ax.grid(True)
     # ax.set_xlabel('X (m)')
     # ax.set_ylabel('Y (m)')
@@ -174,9 +176,7 @@ for k in range(1, int(iter) + 1):
     # #print(best_rec)
     # plt.show()
 
-
-
-        
+    ##이동 이상함 더 움 직 이 는 듯         
     
 
     
