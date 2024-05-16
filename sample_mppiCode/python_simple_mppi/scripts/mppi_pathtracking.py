@@ -104,7 +104,7 @@ class MPPIControllerForPathTracking():
 
         # compute information theoretic weights for each sample
         w = self._compute_weights(S)
-
+        
         # calculate w_k * epsilon_k
         w_epsilon = np.zeros((self.T, self.dim_u))
         for t in range(self.T): # loop for time step t = 0 ~ T-1
