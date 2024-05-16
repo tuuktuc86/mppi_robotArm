@@ -34,11 +34,7 @@ Arm_Dynamic 함수, Forward_Kinematic 함수, Controller 함수, mppi controller
 
 ## 동영상
 
-<<<<<<< HEAD
-|sampling1|sampling2|
-=======
 |trajectory1|trajectory2|
->>>>>>> 29db7bfa80edacc6bfe244df9dd902761af13668
 |---|---|
 |<img src="https://github.com/tuuktuc86/mppi_robotArm/blob/master/project_img/mppi_traj-ezgif.com-video-to-gif-converter.gif">|<img src="https://github.com/tuuktuc86/mppi_robotArm/blob/master/project_img/original_controller_0.25-2024-04-30_22.42.33-ezgif.com-video-to-gif-converter.gif">|
 
