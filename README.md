@@ -1,5 +1,5 @@
 # mppi_robotArm
-2DOF Robotic Arm Control System Using MPPI Controller
+2DOF Robotic Arm Control System Using MPPI Controller.
 
 ## 개요
 robot arm system에 MPC(model Predictive Control)의 일종인 mppi 방법을 적용하는 프로젝트입니다.
